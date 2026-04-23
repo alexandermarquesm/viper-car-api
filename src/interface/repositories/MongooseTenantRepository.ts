@@ -15,6 +15,27 @@ export class MongooseTenantRepository implements ITenantRepository {
       subscriptionStatus: doc.subscriptionStatus as any,
       trialEndsAt: doc.trialEndsAt,
       createdAt: doc.createdAt,
+      externalCustomerId: doc.externalCustomerId,
+      externalSubscriptionId: doc.externalSubscriptionId,
+      variantId: doc.variantId,
+    });
+  }
+
+  async findByExternalCustomerId(externalCustomerId: string): Promise<Tenant | null> {
+    const doc = await TenantModel.findOne({ externalCustomerId });
+    if (!doc) return null;
+    return new Tenant({
+      id: doc.id,
+      name: doc.name,
+      document: doc.document,
+      status: doc.status as any,
+      plan: doc.plan as any,
+      subscriptionStatus: doc.subscriptionStatus as any,
+      trialEndsAt: doc.trialEndsAt,
+      createdAt: doc.createdAt,
+      externalCustomerId: doc.externalCustomerId,
+      externalSubscriptionId: doc.externalSubscriptionId,
+      variantId: doc.variantId,
     });
   }
 
@@ -30,6 +51,9 @@ export class MongooseTenantRepository implements ITenantRepository {
       subscriptionStatus: doc.subscriptionStatus as any,
       trialEndsAt: doc.trialEndsAt,
       createdAt: doc.createdAt,
+      externalCustomerId: doc.externalCustomerId,
+      externalSubscriptionId: doc.externalSubscriptionId,
+      variantId: doc.variantId,
     });
   }
 
@@ -44,6 +68,9 @@ export class MongooseTenantRepository implements ITenantRepository {
         subscriptionStatus: tenant.subscriptionStatus,
         trialEndsAt: tenant.trialEndsAt,
         createdAt: tenant.createdAt,
+        externalCustomerId: tenant.externalCustomerId,
+        externalSubscriptionId: tenant.externalSubscriptionId,
+        variantId: tenant.variantId,
       },
       { returnDocument: 'after', upsert: true }
     );

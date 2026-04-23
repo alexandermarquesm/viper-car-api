@@ -9,6 +9,9 @@ export interface ITenantProps {
   subscriptionStatus?: "active" | "past_due" | "canceled";
   trialEndsAt?: Date;
   createdAt?: Date;
+  externalCustomerId?: string;
+  externalSubscriptionId?: string;
+  variantId?: string;
 }
 
 export class Tenant {
@@ -20,6 +23,9 @@ export class Tenant {
   public subscriptionStatus: "active" | "past_due" | "canceled";
   public trialEndsAt: Date;
   public readonly createdAt: Date;
+  public externalCustomerId?: string;
+  public externalSubscriptionId?: string;
+  public variantId?: string;
 
   constructor(props: ITenantProps) {
     this.id = props.id || crypto.randomUUID();
@@ -39,5 +45,8 @@ export class Tenant {
     }
 
     this.createdAt = props.createdAt || new Date();
+    this.externalCustomerId = props.externalCustomerId;
+    this.externalSubscriptionId = props.externalSubscriptionId;
+    this.variantId = props.variantId;
   }
 }

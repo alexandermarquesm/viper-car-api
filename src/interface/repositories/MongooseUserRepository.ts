@@ -18,6 +18,21 @@ export class MongooseUserRepository implements IUserRepository {
     });
   }
 
+  async findById(id: string): Promise<User | null> {
+    const doc = await UserModel.findById(id);
+    if (!doc) return null;
+    return new User({
+      id: doc.id,
+      tenantId: doc.tenantId.toString(),
+      name: doc.name,
+      email: doc.email,
+      passwordHash: doc.passwordHash,
+      role: doc.role as any,
+      status: doc.status as any,
+      createdAt: doc.createdAt,
+    });
+  }
+
   async save(user: User): Promise<User> {
     const doc = await UserModel.findOneAndUpdate(
       { _id: user.id },

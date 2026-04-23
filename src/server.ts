@@ -4,6 +4,7 @@ import { createApp } from "./infrastructure/webserver/express/app";
 import { makeServiceController } from "./main/factories/controllers/ServiceControllerFactory";
 import { makeClientController } from "./main/factories/controllers/ClientControllerFactory";
 import { makeAuthController } from "./main/factories/controllers/AuthControllerFactory";
+import { makeWebhookController } from "./main/factories/controllers/WebhookControllerFactory";
 
 let appInstance: any = null;
 
@@ -29,8 +30,9 @@ const getApp = async () => {
   const serviceController = makeServiceController(env);
   const clientController = makeClientController();
   const authController = makeAuthController(env.JWT_SECRET);
+  const webhookController = makeWebhookController();
   
-  appInstance = createApp(serviceController, clientController, authController, env.JWT_SECRET);
+  appInstance = createApp(serviceController, clientController, authController, webhookController, env.JWT_SECRET);
   return appInstance;
 };
 

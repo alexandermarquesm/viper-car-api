@@ -1,12 +1,14 @@
 import { Request, Response } from "express";
 import { RegisterTenant } from "../../application/use-cases/Auth/RegisterTenant";
 import { LoginUser } from "../../application/use-cases/Auth/LoginUser";
+import { GetUserInfo } from "../../application/use-cases/Auth/GetUserInfo";
 import { AppError } from "../../infrastructure/errors/AppError";
 
 export class AuthController {
   constructor(
     private registerTenant: RegisterTenant,
-    private loginUser: LoginUser
+    private loginUser: LoginUser,
+    private getUserInfo: GetUserInfo
   ) {}
 
   async register(req: Request, res: Response): Promise<void> {
@@ -39,6 +41,22 @@ export class AuthController {
         throw new AppError(error.message, 401);
       }
       throw error;
+    }
+  }
+
+  async me(req: Request, res: Response): Promise<void> {
+    const authenticatedReq = req as any;
+    const userId = authenticatedReq.user?.id;
+
+    if (!userId) {
+      throw new AppError("Não autenticado", 401);
+    }
+
+    try {
+      const result = await this.getUserInfo.execute({ userId });
+      res.json(result);
+    } catch (error: any) {
+      throw new AppError(error.message, 404);
     }
   }
 }

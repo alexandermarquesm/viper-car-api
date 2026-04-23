@@ -10,6 +10,7 @@ const envSchema = z.object({
   GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY é obrigatória para análise de imagens"),
   OPENAI_API_KEY: z.string().optional(),
   ANALYZE_PROVIDER: z.enum(["gemini", "openai"]).default("gemini"),
+  LEMON_SQUEEZY_WEBHOOK_SECRET: z.string().optional(), // Optional for now to avoid breaking existing setups
 });
 
 export const loadEnv = () => {
