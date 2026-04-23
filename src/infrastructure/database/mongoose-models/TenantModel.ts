@@ -23,8 +23,8 @@ const tenantSchema = new Schema<ITenantDocument>({
   subscriptionStatus: { type: String, default: "active" },
   trialEndsAt: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now },
-  externalCustomerId: { type: String, index: true },
-  externalSubscriptionId: { type: String, index: true },
+  externalCustomerId: { type: String, index: { sparse: true } },
+  externalSubscriptionId: { type: String, index: { sparse: true } },
   variantId: { type: String },
 });
 

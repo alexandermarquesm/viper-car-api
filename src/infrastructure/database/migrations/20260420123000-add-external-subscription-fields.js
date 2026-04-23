@@ -11,6 +11,10 @@ module.exports = {
     // Mas podemos inicializar se necessário.
     
     // Criar índices para performance nas buscas do Webhook
+    // Removemos índices existentes sem 'sparse' se houver conflito
+    try { await db.collection("tenants").dropIndex("externalCustomerId_1"); } catch (e) {}
+    try { await db.collection("tenants").dropIndex("externalSubscriptionId_1"); } catch (e) {}
+
     await db.collection("tenants").createIndex({ externalCustomerId: 1 }, { sparse: true });
     await db.collection("tenants").createIndex({ externalSubscriptionId: 1 }, { sparse: true });
 
