@@ -2,6 +2,7 @@ import { Router } from "express";
 import { ClientController } from "../../../../interface/controllers/ClientController";
 import { asyncHandler } from "../utils/AsyncHandler";
 import { validate } from "../middlewares/ValidationMiddleware";
+import { requireRole } from "../middlewares/RoleMiddleware";
 import { CreateClientSchema, UpdateClientSchema, DeleteClientSchema } from "../../../../domain/schemas/ClientSchema";
 
 export const createClientRoutes = (clientController: ClientController): Router => {
@@ -24,6 +25,7 @@ export const createClientRoutes = (clientController: ClientController): Router =
 
   router.delete(
     "/:id", 
+    requireRole(["owner", "admin"]),
     validate(DeleteClientSchema), 
     asyncHandler((req: any, res: any) => clientController.delete(req, res))
   );

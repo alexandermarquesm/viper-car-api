@@ -6,10 +6,12 @@ import { createServiceRoutes } from "./routes/serviceRoutes";
 import { createClientRoutes } from "./routes/clientRoutes";
 import { createAuthRoutes } from "./routes/authRoutes";
 import { createSubscriptionRoutes } from "./routes/subscriptionRoutes";
+import { createTeamRoutes } from "./routes/teamRoutes";
 import { ServiceController } from "../../../interface/controllers/ServiceController";
 import { ClientController } from "../../../interface/controllers/ClientController";
 import { AuthController } from "../../../interface/controllers/AuthController";
 import { SubscriptionController } from "../../../interface/controllers/SubscriptionController";
+import { TeamController } from "../../../interface/controllers/TeamController";
 import { errorHandler } from "./middlewares/ErrorHandler";
 import { createAuthMiddleware } from "./middlewares/AuthMiddleware";
 import { loggerMiddleware } from "./middlewares/LoggerMiddleware";
@@ -26,6 +28,7 @@ export const createApp = (
   authController: AuthController,
   webhookController: WebhookController,
   subscriptionController: SubscriptionController,
+  teamController: TeamController,
   tenantRepository: ITenantRepository,
   userRepository: IUserRepository,
   jwtSecret: string
@@ -75,6 +78,7 @@ export const createApp = (
   app.get("/backup", authMiddleware, subscriptionMiddleware, asyncHandler((req: any, res: any) => serviceController.backup(req, res)));
   app.use("/services", authMiddleware, subscriptionMiddleware, createServiceRoutes(serviceController));
   app.use("/clients", authMiddleware, subscriptionMiddleware, createClientRoutes(clientController));
+  app.use("/team", authMiddleware, subscriptionMiddleware, createTeamRoutes(teamController));
   
   // Subscription Routes (Protected, but does NOT require active subscription obviously)
   app.use("/subscriptions", authMiddleware, createSubscriptionRoutes(subscriptionController));

@@ -3,6 +3,7 @@ import { ServiceController } from "../../../../interface/controllers/ServiceCont
 import { uploadMiddleware } from "../middlewares/UploadMiddleware";
 import { asyncHandler } from "../utils/AsyncHandler";
 import { validate } from "../middlewares/ValidationMiddleware";
+import { requireRole } from "../middlewares/RoleMiddleware";
 import { 
   CreateWashSchema, 
   UpdateWashStatusSchema, 
@@ -41,11 +42,12 @@ export const createServiceRoutes = (serviceController: ServiceController): Route
 
   router.delete(
     "/:id", 
+    requireRole(["owner", "admin"]),
     validate(DeleteWashSchema), 
     asyncHandler((req: any, res: any) => serviceController.delete(req, res))
   );
 
-  router.get("/backup", asyncHandler((req: any, res: any) => serviceController.backup(req, res)));
+  router.get("/backup", requireRole(["owner"]), asyncHandler((req: any, res: any) => serviceController.backup(req, res)));
   
   return router;
 };

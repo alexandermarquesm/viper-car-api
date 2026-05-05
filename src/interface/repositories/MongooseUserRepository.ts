@@ -49,4 +49,23 @@ export class MongooseUserRepository implements IUserRepository {
     );
     return user;
   }
+
+  async findAllByTenantId(tenantId: string): Promise<User[]> {
+    const docs = await UserModel.find({ tenantId });
+    return docs.map(doc => new User({
+      id: doc.id,
+      tenantId: doc.tenantId.toString(),
+      name: doc.name,
+      email: doc.email,
+      passwordHash: doc.passwordHash,
+      role: doc.role as any,
+      status: doc.status as any,
+      createdAt: doc.createdAt,
+    }));
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const result = await UserModel.deleteOne({ _id: id });
+    return result.deletedCount > 0;
+  }
 }
