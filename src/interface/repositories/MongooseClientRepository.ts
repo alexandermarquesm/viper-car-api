@@ -2,6 +2,9 @@ import { Client } from "../../domain/entities/Client";
 import { IClientRepository } from "../../application/repositories/IClientRepository";
 import ClientModel from "../../infrastructure/database/mongoose-models/ClientModel";
 
+const escapeRegex = (text: string) => text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+
+
 export class MongooseClientRepository implements IClientRepository {
   async save(client: Client): Promise<Client> {
     const data = {
@@ -33,7 +36,7 @@ export class MongooseClientRepository implements IClientRepository {
   }
 
   async findByName(tenantId: string, name: string): Promise<Client[]> {
-    const regex = new RegExp(name, "i");
+    const regex = new RegExp(escapeRegex(name), "i");
     const docs = await ClientModel.find({ tenantId, name: regex }).sort({
       createdAt: -1,
     });
@@ -41,7 +44,7 @@ export class MongooseClientRepository implements IClientRepository {
   }
 
   async search(tenantId: string, query: string): Promise<Client[]> {
-    const regex = new RegExp(query, "i");
+    const regex = new RegExp(escapeRegex(query), "i");
     const docs = await ClientModel.find({
       tenantId,
       $or: [

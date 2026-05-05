@@ -5,6 +5,9 @@ import { makeServiceController } from "./main/factories/controllers/ServiceContr
 import { makeClientController } from "./main/factories/controllers/ClientControllerFactory";
 import { makeAuthController } from "./main/factories/controllers/AuthControllerFactory";
 import { makeWebhookController } from "./main/factories/controllers/WebhookControllerFactory";
+import { makeSubscriptionController } from "./main/factories/controllers/SubscriptionControllerFactory";
+import { MongooseTenantRepository } from "./interface/repositories/MongooseTenantRepository";
+import { MongooseUserRepository } from "./interface/repositories/MongooseUserRepository";
 
 let appInstance: any = null;
 
@@ -31,8 +34,20 @@ const getApp = async () => {
   const clientController = makeClientController();
   const authController = makeAuthController(env.JWT_SECRET);
   const webhookController = makeWebhookController();
+  const subscriptionController = makeSubscriptionController();
+  const tenantRepository = new MongooseTenantRepository();
+  const userRepository = new MongooseUserRepository();
   
-  appInstance = createApp(serviceController, clientController, authController, webhookController, env.JWT_SECRET);
+  appInstance = createApp(
+    serviceController, 
+    clientController, 
+    authController, 
+    webhookController, 
+    subscriptionController,
+    tenantRepository, 
+    userRepository,
+    env.JWT_SECRET
+  );
   return appInstance;
 };
 

@@ -37,7 +37,7 @@ export class AuthController {
       const result = await this.loginUser.execute({ email, passwordRaw });
       res.json(result);
     } catch (error: any) {
-      if (error.message.includes("incorretos") || error.message.includes("inativo")) {
+      if (error.message.includes("incorretos") || error.message.includes("inativo") || error.message.includes("corrompida")) {
         throw new AppError(error.message, 401);
       }
       throw error;

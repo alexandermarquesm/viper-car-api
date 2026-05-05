@@ -37,6 +37,7 @@ export class GetUserInfo {
         plan: tenant.plan,
         subscriptionStatus: tenant.subscriptionStatus,
         trialEndsAt: tenant.trialEndsAt,
+        currentPeriodEnd: tenant.currentPeriodEnd,
       }
     };
   }

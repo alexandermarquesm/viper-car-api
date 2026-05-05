@@ -11,6 +11,9 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().optional(),
   ANALYZE_PROVIDER: z.enum(["gemini", "openai"]).default("gemini"),
   LEMON_SQUEEZY_WEBHOOK_SECRET: z.string().optional(), // Optional for now to avoid breaking existing setups
+  LEMON_SQUEEZY_API_KEY: z.string().optional(),
+  LEMON_SQUEEZY_STORE_ID: z.string().optional(),
+  LEMON_SQUEEZY_VARIANT_ID: z.string().optional(),
 });
 
 export const loadEnv = () => {

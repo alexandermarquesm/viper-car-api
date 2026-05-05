@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { ServiceController } from "../../../../interface/controllers/ServiceController";
-import { subscriptionMiddleware } from "../middlewares/SubscriptionMiddleware";
 import { uploadMiddleware } from "../middlewares/UploadMiddleware";
 import { asyncHandler } from "../utils/AsyncHandler";
 import { validate } from "../middlewares/ValidationMiddleware";
@@ -13,8 +12,6 @@ import {
 
 export const createServiceRoutes = (serviceController: ServiceController): Router => {
   const router = Router();
-
-  router.use(subscriptionMiddleware);
 
   router.post(
     "/scan", 

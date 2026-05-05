@@ -12,6 +12,7 @@ export interface ITenantDocument extends Document<string> {
   externalCustomerId?: string;
   externalSubscriptionId?: string;
   variantId?: string;
+  currentPeriodEnd?: Date;
 }
 
 const tenantSchema = new Schema<ITenantDocument>({
@@ -26,6 +27,7 @@ const tenantSchema = new Schema<ITenantDocument>({
   externalCustomerId: { type: String, index: { sparse: true } },
   externalSubscriptionId: { type: String, index: { sparse: true } },
   variantId: { type: String },
+  currentPeriodEnd: { type: Date },
 });
 
 export default mongoose.model<ITenantDocument>("Tenant", tenantSchema);

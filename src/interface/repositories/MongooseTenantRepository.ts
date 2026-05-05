@@ -18,6 +18,7 @@ export class MongooseTenantRepository implements ITenantRepository {
       externalCustomerId: doc.externalCustomerId,
       externalSubscriptionId: doc.externalSubscriptionId,
       variantId: doc.variantId,
+      currentPeriodEnd: doc.currentPeriodEnd,
     });
   }
 
@@ -36,6 +37,7 @@ export class MongooseTenantRepository implements ITenantRepository {
       externalCustomerId: doc.externalCustomerId,
       externalSubscriptionId: doc.externalSubscriptionId,
       variantId: doc.variantId,
+      currentPeriodEnd: doc.currentPeriodEnd,
     });
   }
 
@@ -54,6 +56,7 @@ export class MongooseTenantRepository implements ITenantRepository {
       externalCustomerId: doc.externalCustomerId,
       externalSubscriptionId: doc.externalSubscriptionId,
       variantId: doc.variantId,
+      currentPeriodEnd: doc.currentPeriodEnd,
     });
   }
 
@@ -71,6 +74,7 @@ export class MongooseTenantRepository implements ITenantRepository {
         externalCustomerId: tenant.externalCustomerId,
         externalSubscriptionId: tenant.externalSubscriptionId,
         variantId: tenant.variantId,
+        currentPeriodEnd: tenant.currentPeriodEnd,
       },
       { returnDocument: 'after', upsert: true }
     );

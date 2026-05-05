@@ -1,14 +1,11 @@
 import { Router } from "express";
 import { ClientController } from "../../../../interface/controllers/ClientController";
-import { subscriptionMiddleware } from "../middlewares/SubscriptionMiddleware";
 import { asyncHandler } from "../utils/AsyncHandler";
 import { validate } from "../middlewares/ValidationMiddleware";
 import { CreateClientSchema, UpdateClientSchema, DeleteClientSchema } from "../../../../domain/schemas/ClientSchema";
 
 export const createClientRoutes = (clientController: ClientController): Router => {
   const router = Router();
-
-  router.use(subscriptionMiddleware);
 
   router.get("/", asyncHandler((req: any, res: any) => clientController.list(req, res)));
   router.get("/search", asyncHandler((req: any, res: any) => clientController.search(req, res)));

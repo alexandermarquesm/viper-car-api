@@ -34,7 +34,7 @@ export class LoginUser {
 
     const tenant = await this.tenantRepository.findById(user.tenantId);
     if (!tenant) {
-      throw new Error("Tenant não encontrado.");
+      throw new Error("Sua conta está corrompida: Empresa (Tenant) não encontrada.");
     }
 
     
@@ -64,6 +64,7 @@ export class LoginUser {
           status: tenant.status,
           subscriptionStatus: tenant.subscriptionStatus,
           trialEndsAt: tenant.trialEndsAt,
+          currentPeriodEnd: tenant.currentPeriodEnd,
         },
       },
     };

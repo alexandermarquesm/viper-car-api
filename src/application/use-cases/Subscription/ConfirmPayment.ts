@@ -5,13 +5,15 @@ interface ConfirmPaymentRequest {
   externalCustomerId: string;
   externalSubscriptionId: string;
   variantId: string;
+  currentPeriodEnd?: Date;
+  status?: string;
 }
 
 export class ConfirmPayment {
   constructor(private tenantRepository: ITenantRepository) {}
 
   async execute(request: ConfirmPaymentRequest): Promise<void> {
-    const { tenantId, externalCustomerId, externalSubscriptionId, variantId } = request;
+    const { tenantId, externalCustomerId, externalSubscriptionId, variantId, currentPeriodEnd, status } = request;
 
     const tenant = await this.tenantRepository.findById(tenantId);
 
@@ -20,10 +22,14 @@ export class ConfirmPayment {
     }
 
     tenant.plan = "monthly";
-    tenant.subscriptionStatus = "active";
+    tenant.subscriptionStatus = (status as any) || "active";
     tenant.externalCustomerId = externalCustomerId;
     tenant.externalSubscriptionId = externalSubscriptionId;
     tenant.variantId = variantId;
+    
+    if (currentPeriodEnd) {
+      tenant.currentPeriodEnd = currentPeriodEnd;
+    }
 
     await this.tenantRepository.save(tenant);
   }

@@ -12,6 +12,7 @@ export interface ITenantProps {
   externalCustomerId?: string;
   externalSubscriptionId?: string;
   variantId?: string;
+  currentPeriodEnd?: Date;
 }
 
 export class Tenant {
@@ -26,6 +27,7 @@ export class Tenant {
   public externalCustomerId?: string;
   public externalSubscriptionId?: string;
   public variantId?: string;
+  public currentPeriodEnd?: Date;
 
   constructor(props: ITenantProps) {
     this.id = props.id || crypto.randomUUID();
@@ -48,5 +50,6 @@ export class Tenant {
     this.externalCustomerId = props.externalCustomerId;
     this.externalSubscriptionId = props.externalSubscriptionId;
     this.variantId = props.variantId;
+    this.currentPeriodEnd = props.currentPeriodEnd;
   }
 }
