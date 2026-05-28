@@ -6,6 +6,7 @@ import { makeClientController } from "./main/factories/controllers/ClientControl
 import { makeAuthController } from "./main/factories/controllers/AuthControllerFactory";
 import { makeWebhookController } from "./main/factories/controllers/WebhookControllerFactory";
 import { makeSubscriptionController } from "./main/factories/controllers/SubscriptionControllerFactory";
+import { makeExpenseController } from "./main/factories/controllers/ExpenseControllerFactory";
 import { TeamController } from "./interface/controllers/TeamController";
 import { MongooseTenantRepository } from "./interface/repositories/MongooseTenantRepository";
 import { MongooseUserRepository } from "./interface/repositories/MongooseUserRepository";
@@ -36,6 +37,7 @@ const getApp = async () => {
   const authController = makeAuthController(env.JWT_SECRET);
   const webhookController = makeWebhookController();
   const subscriptionController = makeSubscriptionController();
+  const expenseController = makeExpenseController();
   const tenantRepository = new MongooseTenantRepository();
   const userRepository = new MongooseUserRepository();
   const teamController = new TeamController(userRepository);
@@ -47,6 +49,7 @@ const getApp = async () => {
     webhookController, 
     subscriptionController,
     teamController,
+    expenseController,
     tenantRepository, 
     userRepository,
     env.JWT_SECRET

@@ -7,11 +7,13 @@ import { createClientRoutes } from "./routes/clientRoutes";
 import { createAuthRoutes } from "./routes/authRoutes";
 import { createSubscriptionRoutes } from "./routes/subscriptionRoutes";
 import { createTeamRoutes } from "./routes/teamRoutes";
+import { createExpenseRoutes } from "./routes/expenseRoutes";
 import { ServiceController } from "../../../interface/controllers/ServiceController";
 import { ClientController } from "../../../interface/controllers/ClientController";
 import { AuthController } from "../../../interface/controllers/AuthController";
 import { SubscriptionController } from "../../../interface/controllers/SubscriptionController";
 import { TeamController } from "../../../interface/controllers/TeamController";
+import { ExpenseController } from "../../../interface/controllers/ExpenseController";
 import { errorHandler } from "./middlewares/ErrorHandler";
 import { createAuthMiddleware } from "./middlewares/AuthMiddleware";
 import { activeUserMiddleware } from "./middlewares/ActiveUserMiddleware";
@@ -30,6 +32,7 @@ export const createApp = (
   webhookController: WebhookController,
   subscriptionController: SubscriptionController,
   teamController: TeamController,
+  expenseController: ExpenseController,
   tenantRepository: ITenantRepository,
   userRepository: IUserRepository,
   jwtSecret: string
@@ -89,6 +92,7 @@ export const createApp = (
   app.use("/services", authMiddleware, activeUserMiddleware, subscriptionMiddleware, createServiceRoutes(serviceController));
   app.use("/clients", authMiddleware, activeUserMiddleware, subscriptionMiddleware, createClientRoutes(clientController));
   app.use("/team", authMiddleware, activeUserMiddleware, subscriptionMiddleware, createTeamRoutes(teamController));
+  app.use("/expenses", authMiddleware, activeUserMiddleware, subscriptionMiddleware, createExpenseRoutes(expenseController));
   
   // Subscription Routes (Protected, but does NOT require active subscription obviously)
   app.use("/subscriptions", authMiddleware, createSubscriptionRoutes(subscriptionController));
