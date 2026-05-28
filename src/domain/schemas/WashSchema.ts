@@ -10,7 +10,7 @@ export const WashSchema = z.object({
   clientId: z.string().min(20, "ID do cliente inválido").or(z.any()), // Permissivo para entidades em memória
   plate: z.string().regex(/^[A-Z]{3}\d[A-Z\d]\d{2}$/, "Placa inválida"),
   carModel: z.string().max(30),
-  price: z.number().min(0),
+  price: z.number().gt(0, "O preço do serviço deve ser maior que zero"),
   deliveryTime: z.any(),
   status: z.enum(["pending", "completed", "cancelled"]).optional().default("pending"),
   paymentMethod: z.string().optional(),
@@ -24,7 +24,7 @@ export const CreateWashSchema = z.object({
     phone: z.string().min(10, "Telefone inválido").max(15).regex(/^\d+$/, "Apenas números no telefone"),
     plate: z.string().regex(/^[A-Z]{3}\d[A-Z\d]\d{2}$/, "Placa inválida"),
     carModel: z.string().max(30),
-    washPrice: z.number().min(0),
+    washPrice: z.number().gt(0, "O preço do serviço deve ser maior que zero"),
     deliveryTime: z.string().or(z.date()),
     paymentMethod: z.string().optional(),
   })
@@ -47,7 +47,7 @@ export const UpdateWashPriceSchema = z.object({
     id: z.string().min(20, "ID inválido")
   }),
   body: z.object({
-    price: z.number().min(0)
+    price: z.number().gt(0, "O preço do serviço deve ser maior que zero")
   })
 });
 
