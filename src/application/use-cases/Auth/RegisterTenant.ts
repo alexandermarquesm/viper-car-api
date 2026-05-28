@@ -5,11 +5,13 @@ import { IUserRepository } from "../../repositories/IUserRepository";
 import bcrypt from "bcryptjs";
 
 export interface RegisterTenantInput {
-  tenantName: string;
+  tenantName?: string;
   document?: string;
   userName: string;
   email: string;
   passwordRaw: string;
+  role?: "owner" | "worker";
+  inviteCode?: string;
 }
 
 export class RegisterTenant {
@@ -20,36 +22,69 @@ export class RegisterTenant {
 
   async execute(input: RegisterTenantInput) {
     // Check if email is already taken
-    const existingUser = await this.userRepository.findByEmail(input.email);
+    const cleanEmail = input.email.toLowerCase().trim();
+    const existingUser = await this.userRepository.findByEmail(cleanEmail);
     if (existingUser) {
       throw new Error("Este e-mail já está em uso.");
     }
 
-    // 1. Create Tenant (defaults to 7 days trial in entity constructor)
-    const tenant = new Tenant({
-      name: input.tenantName,
-      document: input.document,
-    });
-    const savedTenant = await this.tenantRepository.save(tenant);
-
-    // 2. Hash Password
+    // Hash Password
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(input.passwordRaw, salt);
 
-    // 3. Create Admin User for this Tenant
-    const user = new User({
-      tenantId: savedTenant.id,
-      name: input.userName,
-      email: input.email,
-      passwordHash,
-      role: "owner",
-    });
-    const savedUser = await this.userRepository.save(user);
+    if (input.role === "worker") {
+      if (!input.inviteCode) {
+        throw new Error("Código de convite é obrigatório para colaboradores.");
+      }
+      const tenant = await this.tenantRepository.findByInviteCode(input.inviteCode);
+      if (!tenant) {
+        throw new Error("Código de convite inválido ou estabelecimento não encontrado.");
+      }
 
-    return {
-      success: true,
-      tenantId: savedTenant.id,
-      userId: savedUser.id,
-    };
+      // Create Worker User for this Tenant (status = pending)
+      const user = new User({
+        tenantId: tenant.id,
+        name: input.userName,
+        email: input.email,
+        passwordHash,
+        role: "worker",
+        status: "pending",
+      });
+      const savedUser = await this.userRepository.save(user);
+
+      return {
+        success: true,
+        tenantId: tenant.id,
+        userId: savedUser.id,
+      };
+    } else {
+      // Owner Flow
+      if (!input.tenantName) {
+        throw new Error("O nome da empresa é obrigatório para proprietários.");
+      }
+      // 1. Create Tenant (defaults to 7 days trial in entity constructor)
+      const tenant = new Tenant({
+        name: input.tenantName,
+        document: input.document,
+      });
+      const savedTenant = await this.tenantRepository.save(tenant);
+
+      // 3. Create Admin User for this Tenant
+      const user = new User({
+        tenantId: savedTenant.id,
+        name: input.userName,
+        email: input.email,
+        passwordHash,
+        role: "owner",
+        status: "active",
+      });
+      const savedUser = await this.userRepository.save(user);
+
+      return {
+        success: true,
+        tenantId: savedTenant.id,
+        userId: savedUser.id,
+      };
+    }
   }
 }

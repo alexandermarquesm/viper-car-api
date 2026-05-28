@@ -1,5 +1,6 @@
 import { MongooseClientRepository } from "../../../interface/repositories/MongooseClientRepository";
 import { MongooseWashRepository } from "../../../interface/repositories/MongooseWashRepository";
+import { MongooseTenantRepository } from "../../../interface/repositories/MongooseTenantRepository";
 import { RegisterService } from "../../../application/use-cases/RegisterService";
 import { ListServices } from "../../../application/use-cases/ListServices";
 import { UpdateServiceStatus } from "../../../application/use-cases/UpdateServiceStatus";
@@ -14,11 +15,12 @@ import { OpenAIAnalyzerProvider } from "../../../infrastructure/providers/OpenAI
 export const makeServiceController = (env: any): ServiceController => {
   const clientRepository = new MongooseClientRepository();
   const washRepository = new MongooseWashRepository();
+  const tenantRepository = new MongooseTenantRepository();
 
-  const registerService = new RegisterService(clientRepository, washRepository);
+  const registerService = new RegisterService(clientRepository, washRepository, tenantRepository);
   const listServices = new ListServices(washRepository);
-  const updateServiceStatus = new UpdateServiceStatus(washRepository);
-  const updateServicePrice = new UpdateServicePrice(washRepository);
+  const updateServiceStatus = new UpdateServiceStatus(washRepository, tenantRepository);
+  const updateServicePrice = new UpdateServicePrice(washRepository, tenantRepository);
   const deleteService = new DeleteService(washRepository);
   const getBackup = new GetBackup(clientRepository, washRepository);
 

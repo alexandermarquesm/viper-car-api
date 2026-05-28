@@ -13,6 +13,9 @@ export interface ITenantDocument extends Document<string> {
   externalSubscriptionId?: string;
   variantId?: string;
   currentPeriodEnd?: Date;
+  creditCardFee: number;
+  debitCardFee: number;
+  inviteCode: string;
 }
 
 const tenantSchema = new Schema<ITenantDocument>({
@@ -28,6 +31,9 @@ const tenantSchema = new Schema<ITenantDocument>({
   externalSubscriptionId: { type: String, index: { sparse: true } },
   variantId: { type: String },
   currentPeriodEnd: { type: Date },
+  creditCardFee: { type: Number, default: 3.09 },
+  debitCardFee: { type: Number, default: 0.89 },
+  inviteCode: { type: String, unique: true, sparse: true, index: true },
 });
 
 export default mongoose.model<ITenantDocument>("Tenant", tenantSchema);

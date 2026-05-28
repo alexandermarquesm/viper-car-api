@@ -54,20 +54,75 @@ export class TeamController {
   async listMembers(req: AuthenticatedRequest, res: Response): Promise<void> {
     const tenantId = req.user!.tenantId;
     
-    // Pega os membros ativos
+    // Pega todos os colaboradores associados a este tenant
     const members = await this.userRepository.findAllByTenantId(tenantId);
-    const safeMembers = members.map(m => ({
-      id: m.id,
-      name: m.name,
-      email: m.email,
-      role: m.role,
-      status: m.status,
-    }));
+    
+    const activeMembers = members
+      .filter(m => m.status === "active" || m.status === "inactive")
+      .map(m => ({
+        id: m.id,
+        name: m.name,
+        email: m.email,
+        role: m.role,
+        status: m.status,
+      }));
+
+    const pendingRequests = members
+      .filter(m => m.status === "pending")
+      .map(m => ({
+        id: m.id,
+        name: m.name,
+        email: m.email,
+        role: m.role,
+        status: m.status,
+      }));
 
     // Pega os convites pendentes que o dono enviou
     const pendingInvites = await InviteModel.find({ tenantId, status: "pending" });
 
-    res.json({ members: safeMembers, invites: pendingInvites });
+    // Busca o Tenant para pegar o código de convite
+    const tenant = await TenantModel.findById(tenantId);
+
+    if (tenant && !tenant.inviteCode) {
+      tenant.inviteCode = `VIP-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+      await tenant.save();
+    }
+
+    res.json({ 
+      members: activeMembers, 
+      pendingRequests,
+      invites: pendingInvites, 
+      inviteCode: tenant?.inviteCode || "",
+    });
+  }
+
+  async approveRequest(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const { id } = req.params;
+    const tenantId = req.user!.tenantId;
+
+    const worker = await this.userRepository.findById(id);
+    if (!worker || worker.tenantId !== tenantId || worker.status !== "pending") {
+      throw new AppError("Solicitação de colaborador não encontrada ou já processada.", 404);
+    }
+
+    worker.status = "active";
+    await this.userRepository.save(worker);
+
+    res.json({ success: true, message: "Colaborador aprovado com sucesso!" });
+  }
+
+  async rejectRequest(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const { id } = req.params;
+    const tenantId = req.user!.tenantId;
+
+    const worker = await this.userRepository.findById(id);
+    if (!worker || worker.tenantId !== tenantId || worker.status !== "pending") {
+      throw new AppError("Solicitação de colaborador não encontrada ou já processada.", 404);
+    }
+
+    await this.userRepository.delete(id);
+
+    res.json({ success: true, message: "Solicitação recusada com sucesso!" });
   }
 
   async removeMember(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -97,6 +152,7 @@ export class TeamController {
 
     member.tenantId = newTenant._id.toString();
     member.role = "owner";
+    member.status = "active";
     await this.userRepository.save(member);
 
     res.status(204).send();
@@ -105,12 +161,7 @@ export class TeamController {
   // --- Worker Actions --- //
 
   async getMyInvites(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const email = req.user?.email || ""; // We don't have email in auth payload currently, need to fetch user
-    
-    const user = await this.userRepository.findById(req.user!.id);
-    if (!user) throw new AppError("Usuário não encontrado", 404);
-
-    const invites = await InviteModel.find({ email: user.email, status: "pending" });
+    const invites = await InviteModel.find({ email: req.user!.email, status: "pending" });
     res.json(invites);
   }
 
@@ -132,6 +183,7 @@ export class TeamController {
     // Update user to point to new tenant and set role to worker
     user.tenantId = invite.tenantId.toString();
     user.role = "worker";
+    user.status = "active";
     await this.userRepository.save(user);
 
     // Cancelar outros convites pendentes do mesmo email (opcional, mas boa pratica)
@@ -143,10 +195,7 @@ export class TeamController {
   async rejectInvite(req: AuthenticatedRequest, res: Response): Promise<void> {
     const { id } = req.params;
     
-    const user = await this.userRepository.findById(req.user!.id);
-    if (!user) throw new AppError("Usuário não encontrado", 404);
-
-    const invite = await InviteModel.findOne({ _id: id, email: user.email, status: "pending" });
+    const invite = await InviteModel.findOne({ _id: id, email: req.user!.email, status: "pending" });
     if (!invite) {
       throw new AppError("Convite não encontrado", 404);
     }

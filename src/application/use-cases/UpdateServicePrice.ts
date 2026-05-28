@@ -1,6 +1,7 @@
 import { Wash } from "../../domain/entities/Wash";
 import { PriceCalculator } from "../../domain/services/PriceCalculator";
 import { IWashRepository } from "../repositories/IWashRepository";
+import { ITenantRepository } from "../repositories/ITenantRepository";
 
 export interface UpdateServicePriceInput {
   tenantId: string;
@@ -9,7 +10,10 @@ export interface UpdateServicePriceInput {
 }
 
 export class UpdateServicePrice {
-  constructor(private washRepository: IWashRepository) {}
+  constructor(
+    private washRepository: IWashRepository,
+    private tenantRepository: ITenantRepository
+  ) {}
 
   async execute({ tenantId, id, price }: UpdateServicePriceInput) {
     const finalPrice = price || 0;
@@ -19,10 +23,14 @@ export class UpdateServicePrice {
       throw new Error("Serviço não encontrado");
     }
 
+    const tenant = await this.tenantRepository.findById(tenantId);
+    const customCreditFee = tenant?.creditCardFee;
+    const customDebitFee = tenant?.debitCardFee;
+
     const updateData: Partial<Wash> = {
       price: finalPrice,
       netPrice: wash.paymentMethod
-        ? PriceCalculator.calculateNetPrice(finalPrice, wash.paymentMethod)
+        ? PriceCalculator.calculateNetPrice(finalPrice, wash.paymentMethod, customCreditFee, customDebitFee)
         : finalPrice,
     };
 

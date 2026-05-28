@@ -19,6 +19,9 @@ export class MongooseTenantRepository implements ITenantRepository {
       externalSubscriptionId: doc.externalSubscriptionId,
       variantId: doc.variantId,
       currentPeriodEnd: doc.currentPeriodEnd,
+      creditCardFee: doc.creditCardFee !== undefined ? doc.creditCardFee : 3.09,
+      debitCardFee: doc.debitCardFee !== undefined ? doc.debitCardFee : 0.89,
+      inviteCode: doc.inviteCode,
     });
   }
 
@@ -38,6 +41,9 @@ export class MongooseTenantRepository implements ITenantRepository {
       externalSubscriptionId: doc.externalSubscriptionId,
       variantId: doc.variantId,
       currentPeriodEnd: doc.currentPeriodEnd,
+      creditCardFee: doc.creditCardFee !== undefined ? doc.creditCardFee : 3.09,
+      debitCardFee: doc.debitCardFee !== undefined ? doc.debitCardFee : 0.89,
+      inviteCode: doc.inviteCode,
     });
   }
 
@@ -57,6 +63,31 @@ export class MongooseTenantRepository implements ITenantRepository {
       externalSubscriptionId: doc.externalSubscriptionId,
       variantId: doc.variantId,
       currentPeriodEnd: doc.currentPeriodEnd,
+      creditCardFee: doc.creditCardFee !== undefined ? doc.creditCardFee : 3.09,
+      debitCardFee: doc.debitCardFee !== undefined ? doc.debitCardFee : 0.89,
+      inviteCode: doc.inviteCode,
+    });
+  }
+
+  async findByInviteCode(inviteCode: string): Promise<Tenant | null> {
+    const doc = await TenantModel.findOne({ inviteCode: inviteCode.trim().toUpperCase() });
+    if (!doc) return null;
+    return new Tenant({
+      id: doc.id,
+      name: doc.name,
+      document: doc.document,
+      status: doc.status as any,
+      plan: doc.plan as any,
+      subscriptionStatus: doc.subscriptionStatus as any,
+      trialEndsAt: doc.trialEndsAt,
+      createdAt: doc.createdAt,
+      externalCustomerId: doc.externalCustomerId,
+      externalSubscriptionId: doc.externalSubscriptionId,
+      variantId: doc.variantId,
+      currentPeriodEnd: doc.currentPeriodEnd,
+      creditCardFee: doc.creditCardFee !== undefined ? doc.creditCardFee : 3.09,
+      debitCardFee: doc.debitCardFee !== undefined ? doc.debitCardFee : 0.89,
+      inviteCode: doc.inviteCode,
     });
   }
 
@@ -75,6 +106,9 @@ export class MongooseTenantRepository implements ITenantRepository {
         externalSubscriptionId: tenant.externalSubscriptionId,
         variantId: tenant.variantId,
         currentPeriodEnd: tenant.currentPeriodEnd,
+        creditCardFee: tenant.creditCardFee,
+        debitCardFee: tenant.debitCardFee,
+        inviteCode: tenant.inviteCode,
       },
       { returnDocument: 'after', upsert: true }
     );

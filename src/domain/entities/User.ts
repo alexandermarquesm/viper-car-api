@@ -6,8 +6,9 @@ export interface IUserProps {
   name: string;
   email: string;
   passwordHash: string; // The hashed password, NOT plaintext
+  tokenVersion?: number;
   role?: "owner" | "admin" | "worker";
-  status?: "active" | "inactive";
+  status?: "active" | "inactive" | "pending";
   createdAt?: Date;
 }
 
@@ -17,8 +18,9 @@ export class User {
   public name: string;
   public email: string;
   public passwordHash: string;
+  public tokenVersion: number;
   public role: "owner" | "admin" | "worker";
-  public status: "active" | "inactive";
+  public status: "active" | "inactive" | "pending";
   public readonly createdAt: Date;
 
   constructor(props: IUserProps) {
@@ -27,6 +29,7 @@ export class User {
     this.name = props.name;
     this.email = props.email.toLowerCase().trim();
     this.passwordHash = props.passwordHash;
+    this.tokenVersion = props.tokenVersion || 0;
     this.role = props.role || "worker";
     this.status = props.status || "active";
     this.createdAt = props.createdAt || new Date();

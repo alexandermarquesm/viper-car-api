@@ -14,6 +14,7 @@ import { SubscriptionController } from "../../../interface/controllers/Subscript
 import { TeamController } from "../../../interface/controllers/TeamController";
 import { errorHandler } from "./middlewares/ErrorHandler";
 import { createAuthMiddleware } from "./middlewares/AuthMiddleware";
+import { activeUserMiddleware } from "./middlewares/ActiveUserMiddleware";
 import { loggerMiddleware } from "./middlewares/LoggerMiddleware";
 import { asyncHandler } from "./utils/AsyncHandler";
 import { WebhookController } from "../../../interface/controllers/WebhookController";
@@ -34,7 +35,8 @@ export const createApp = (
   jwtSecret: string
 ): Express => {
   const app = express();
-  const authMiddleware = createAuthMiddleware(jwtSecret, userRepository);
+  app.set("trust proxy", 1);
+  const authMiddleware = createAuthMiddleware(jwtSecret, userRepository, tenantRepository);
   const subscriptionMiddleware = createSubscriptionMiddleware(tenantRepository);
   
   // Security Middlewares
@@ -56,6 +58,14 @@ export const createApp = (
   });
   app.use(limiter);
 
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // Limit each IP to 10 requests per 15 minutes for auth
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Muitas tentativas de login ou registro, tente novamente mais tarde." },
+  });
+
   // Webhook Route (RAW BODY required for signature verification)
   app.post(
     "/webhooks/lemon-squeezy", 
@@ -72,13 +82,13 @@ export const createApp = (
   });
 
   // Auth Routes (Public)
-  app.use("/auth", createAuthRoutes(authController, authMiddleware));
+  app.use("/auth", createAuthRoutes(authController, authMiddleware, authLimiter));
 
-  // Domain Routes (Protected & Subscription Required)
-  app.get("/backup", authMiddleware, subscriptionMiddleware, asyncHandler((req: any, res: any) => serviceController.backup(req, res)));
-  app.use("/services", authMiddleware, subscriptionMiddleware, createServiceRoutes(serviceController));
-  app.use("/clients", authMiddleware, subscriptionMiddleware, createClientRoutes(clientController));
-  app.use("/team", authMiddleware, subscriptionMiddleware, createTeamRoutes(teamController));
+  // Domain Routes (Protected & Subscription Required & Active status enforced)
+  app.get("/backup", authMiddleware, activeUserMiddleware, subscriptionMiddleware, asyncHandler((req: any, res: any) => serviceController.backup(req, res)));
+  app.use("/services", authMiddleware, activeUserMiddleware, subscriptionMiddleware, createServiceRoutes(serviceController));
+  app.use("/clients", authMiddleware, activeUserMiddleware, subscriptionMiddleware, createClientRoutes(clientController));
+  app.use("/team", authMiddleware, activeUserMiddleware, subscriptionMiddleware, createTeamRoutes(teamController));
   
   // Subscription Routes (Protected, but does NOT require active subscription obviously)
   app.use("/subscriptions", authMiddleware, createSubscriptionRoutes(subscriptionController));

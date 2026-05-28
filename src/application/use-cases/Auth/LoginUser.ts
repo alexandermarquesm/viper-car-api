@@ -2,6 +2,7 @@ import { IUserRepository } from "../../repositories/IUserRepository";
 import { ITenantRepository } from "../../repositories/ITenantRepository";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import TenantModel from "../../../infrastructure/database/mongoose-models/TenantModel";
 
 export interface LoginUserInput {
   email: string;
@@ -16,7 +17,8 @@ export class LoginUser {
   ) {}
 
   async execute({ email, passwordRaw }: LoginUserInput) {
-    const user = await this.userRepository.findByEmail(email);
+    const cleanEmail = email.toLowerCase().trim();
+    const user = await this.userRepository.findByEmail(cleanEmail);
     if (!user) {
       throw new Error("E-mail ou senha incorretos.");
     }
@@ -28,7 +30,7 @@ export class LoginUser {
 
     const secret = this.jwtSecret;
 
-    if (user.status !== "active") {
+    if (user.status === "inactive") {
       throw new Error("Usuário inativo.");
     }
 
@@ -37,7 +39,13 @@ export class LoginUser {
       throw new Error("Sua conta está corrompida: Empresa (Tenant) não encontrada.");
     }
 
-    
+    // Persist inviteCode if it was lazily generated
+    const doc = await TenantModel.findById(user.tenantId);
+    if (doc && !doc.inviteCode) {
+      doc.inviteCode = tenant.inviteCode;
+      await doc.save();
+    }
+
     const tokenExpiration = tenant.plan === "monthly" ? "30d" : "7d";
 
     const token = jwt.sign(
@@ -45,6 +53,7 @@ export class LoginUser {
         id: user.id,
         tenantId: user.tenantId,
         role: user.role,
+        tokenVersion: user.tokenVersion,
       },
       secret,
       { expiresIn: tokenExpiration }
@@ -58,6 +67,7 @@ export class LoginUser {
         email: user.email,
         role: user.role,
         tenantId: user.tenantId,
+        status: user.status,
         tenant: {
           name: tenant.name,
           plan: tenant.plan,
@@ -65,6 +75,9 @@ export class LoginUser {
           subscriptionStatus: tenant.subscriptionStatus,
           trialEndsAt: tenant.trialEndsAt,
           currentPeriodEnd: tenant.currentPeriodEnd,
+          creditCardFee: tenant.creditCardFee,
+          debitCardFee: tenant.debitCardFee,
+          inviteCode: tenant.inviteCode,
         },
       },
     };

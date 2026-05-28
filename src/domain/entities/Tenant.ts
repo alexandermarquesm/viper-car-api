@@ -13,6 +13,9 @@ export interface ITenantProps {
   externalSubscriptionId?: string;
   variantId?: string;
   currentPeriodEnd?: Date;
+  creditCardFee?: number;
+  debitCardFee?: number;
+  inviteCode?: string;
 }
 
 export class Tenant {
@@ -28,6 +31,9 @@ export class Tenant {
   public externalSubscriptionId?: string;
   public variantId?: string;
   public currentPeriodEnd?: Date;
+  public creditCardFee: number;
+  public debitCardFee: number;
+  public inviteCode: string;
 
   constructor(props: ITenantProps) {
     this.id = props.id || crypto.randomUUID();
@@ -51,5 +57,8 @@ export class Tenant {
     this.externalSubscriptionId = props.externalSubscriptionId;
     this.variantId = props.variantId;
     this.currentPeriodEnd = props.currentPeriodEnd;
+    this.creditCardFee = props.creditCardFee !== undefined ? props.creditCardFee : 3.09;
+    this.debitCardFee = props.debitCardFee !== undefined ? props.debitCardFee : 0.89;
+    this.inviteCode = props.inviteCode || `VIP-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
   }
 }

@@ -6,8 +6,9 @@ export interface IUserDocument extends Document<string> {
   name: string;
   email: string;
   passwordHash: string;
+  tokenVersion: number;
   role: "owner" | "admin" | "worker";
-  status: "active" | "inactive";
+  status: "active" | "inactive" | "pending";
   createdAt: Date;
 }
 
@@ -17,8 +18,9 @@ const userSchema = new Schema<IUserDocument>({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true, index: true },
   passwordHash: { type: String, required: true },
+  tokenVersion: { type: Number, default: 0 },
   role: { type: String, default: "worker" },
-  status: { type: String, default: "active" },
+  status: { type: String, default: "active", index: true },
   createdAt: { type: Date, default: Date.now },
 });
 

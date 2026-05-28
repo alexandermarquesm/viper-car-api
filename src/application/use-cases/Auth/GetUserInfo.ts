@@ -1,5 +1,6 @@
 import { IUserRepository } from "../../repositories/IUserRepository";
 import { ITenantRepository } from "../../repositories/ITenantRepository";
+import TenantModel from "../../../infrastructure/database/mongoose-models/TenantModel";
 
 interface GetUserInfoRequest {
   userId: string;
@@ -22,6 +23,13 @@ export class GetUserInfo {
       throw new Error("Tenant não encontrado");
     }
 
+    // Persist inviteCode if it was lazily generated
+    const doc = await TenantModel.findById(user.tenantId);
+    if (doc && !doc.inviteCode) {
+      doc.inviteCode = tenant.inviteCode;
+      await doc.save();
+    }
+
     return {
       user: {
         id: user.id,
@@ -38,6 +46,9 @@ export class GetUserInfo {
         subscriptionStatus: tenant.subscriptionStatus,
         trialEndsAt: tenant.trialEndsAt,
         currentPeriodEnd: tenant.currentPeriodEnd,
+        creditCardFee: tenant.creditCardFee,
+        debitCardFee: tenant.debitCardFee,
+        inviteCode: tenant.inviteCode,
       }
     };
   }

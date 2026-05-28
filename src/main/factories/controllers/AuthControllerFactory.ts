@@ -13,5 +13,5 @@ export const makeAuthController = (jwtSecret: string): AuthController => {
   const loginUser = new LoginUser(userRepository, tenantRepository, jwtSecret);
   const getUserInfo = new GetUserInfo(userRepository, tenantRepository);
 
-  return new AuthController(registerTenant, loginUser, getUserInfo);
+  return new AuthController(registerTenant, loginUser, getUserInfo, tenantRepository);
 };

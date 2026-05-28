@@ -3,6 +3,7 @@ import { Wash } from "../../domain/entities/Wash";
 import { PriceCalculator } from "../../domain/services/PriceCalculator";
 import { IClientRepository } from "../repositories/IClientRepository";
 import { IWashRepository } from "../repositories/IWashRepository";
+import { ITenantRepository } from "../repositories/ITenantRepository";
 import { ClientSchema } from "../../domain/schemas/ClientSchema";
 import { WashSchema } from "../../domain/schemas/WashSchema";
 import crypto from "crypto";
@@ -21,7 +22,8 @@ export interface RegisterServiceInput {
 export class RegisterService {
   constructor(
     private clientRepository: IClientRepository,
-    private washRepository: IWashRepository
+    private washRepository: IWashRepository,
+    private tenantRepository: ITenantRepository
   ) {}
 
   async execute(input: RegisterServiceInput) {
@@ -53,7 +55,13 @@ export class RegisterService {
     }
 
     // 3. Create Wash Record
-    const netPrice = PriceCalculator.calculateNetPrice(input.washPrice, input.paymentMethod);
+    const tenant = await this.tenantRepository.findById(input.tenantId);
+    const netPrice = PriceCalculator.calculateNetPrice(
+      input.washPrice,
+      input.paymentMethod,
+      tenant?.creditCardFee,
+      tenant?.debitCardFee
+    );
 
     const wash = new Wash({
       tenantId: input.tenantId,

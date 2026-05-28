@@ -1,6 +1,7 @@
 import { IPayment, Wash } from "../../domain/entities/Wash";
 import { PriceCalculator } from "../../domain/services/PriceCalculator";
 import { IWashRepository } from "../repositories/IWashRepository";
+import { ITenantRepository } from "../repositories/ITenantRepository";
 
 export interface UpdateServiceStatusInput {
   tenantId: string;
@@ -11,7 +12,10 @@ export interface UpdateServiceStatusInput {
 }
 
 export class UpdateServiceStatus {
-  constructor(private washRepository: IWashRepository) {}
+  constructor(
+    private washRepository: IWashRepository,
+    private tenantRepository: ITenantRepository
+  ) {}
 
   async execute({ tenantId, id, status, paymentMethod, payments }: UpdateServiceStatusInput) {
     const wash = await this.washRepository.findById(tenantId, id);
@@ -31,16 +35,20 @@ export class UpdateServiceStatus {
     }
 
     if (status === "completed") {
+      const tenant = await this.tenantRepository.findById(tenantId);
+      const customCreditFee = tenant?.creditCardFee;
+      const customDebitFee = tenant?.debitCardFee;
+
       if (payments && Array.isArray(payments) && payments.length > 0) {
         updateData.payments = payments;
         const mainPayment = payments.reduce((prev, current) =>
           prev.amount > current.amount ? prev : current
         );
         updateData.paymentMethod = mainPayment.method;
-        updateData.netPrice = PriceCalculator.calculateTotalNetPrice(payments);
+        updateData.netPrice = PriceCalculator.calculateTotalNetPrice(payments, customCreditFee, customDebitFee);
       } else if (paymentMethod) {
         updateData.paymentMethod = paymentMethod;
-        updateData.netPrice = PriceCalculator.calculateNetPrice(wash.price, paymentMethod);
+        updateData.netPrice = PriceCalculator.calculateNetPrice(wash.price, paymentMethod, customCreditFee, customDebitFee);
       }
     }
 

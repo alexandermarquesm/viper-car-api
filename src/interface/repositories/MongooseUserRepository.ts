@@ -4,7 +4,7 @@ import UserModel from "../../infrastructure/database/mongoose-models/UserModel";
 
 export class MongooseUserRepository implements IUserRepository {
   async findByEmail(email: string): Promise<User | null> {
-    const doc = await UserModel.findOne({ email });
+    const doc = await UserModel.findOne({ email: email.toLowerCase().trim() });
     if (!doc) return null;
     return new User({
       id: doc.id,
@@ -12,6 +12,7 @@ export class MongooseUserRepository implements IUserRepository {
       name: doc.name,
       email: doc.email,
       passwordHash: doc.passwordHash,
+      tokenVersion: doc.tokenVersion,
       role: doc.role as any,
       status: doc.status as any,
       createdAt: doc.createdAt,
@@ -27,6 +28,7 @@ export class MongooseUserRepository implements IUserRepository {
       name: doc.name,
       email: doc.email,
       passwordHash: doc.passwordHash,
+      tokenVersion: doc.tokenVersion,
       role: doc.role as any,
       status: doc.status as any,
       createdAt: doc.createdAt,
@@ -41,6 +43,7 @@ export class MongooseUserRepository implements IUserRepository {
         name: user.name,
         email: user.email,
         passwordHash: user.passwordHash,
+        tokenVersion: user.tokenVersion,
         role: user.role,
         status: user.status,
         createdAt: user.createdAt,
@@ -58,6 +61,7 @@ export class MongooseUserRepository implements IUserRepository {
       name: doc.name,
       email: doc.email,
       passwordHash: doc.passwordHash,
+      tokenVersion: doc.tokenVersion,
       role: doc.role as any,
       status: doc.status as any,
       createdAt: doc.createdAt,

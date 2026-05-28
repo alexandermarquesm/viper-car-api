@@ -24,6 +24,18 @@ export const createTeamRoutes = (teamController: TeamController): Router => {
     asyncHandler((req: any, res: any) => teamController.removeMember(req, res))
   );
 
+  router.post(
+    "/requests/:id/approve",
+    requireRole(["owner"]),
+    asyncHandler((req: any, res: any) => teamController.approveRequest(req, res))
+  );
+
+  router.post(
+    "/requests/:id/reject",
+    requireRole(["owner"]),
+    asyncHandler((req: any, res: any) => teamController.rejectRequest(req, res))
+  );
+
   // --- Worker Actions --- //
   
   router.get(
