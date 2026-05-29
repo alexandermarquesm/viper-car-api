@@ -11,11 +11,12 @@ import {
   DeleteWashSchema 
 } from "../../../../domain/schemas/WashSchema";
 
-export const createServiceRoutes = (serviceController: ServiceController): Router => {
+export const createServiceRoutes = (serviceController: ServiceController, planLimitMiddleware?: any): Router => {
   const router = Router();
 
   router.post(
     "/scan", 
+    planLimitMiddleware ? planLimitMiddleware("ocr") : (req: any, res: any, next: any) => next(),
     uploadMiddleware.single("image"), 
     asyncHandler((req: any, res: any) => serviceController.scanSheet(req, res))
   );

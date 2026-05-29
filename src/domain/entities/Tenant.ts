@@ -61,4 +61,31 @@ export class Tenant {
     this.debitCardFee = props.debitCardFee !== undefined ? props.debitCardFee : 0.89;
     this.inviteCode = props.inviteCode || `VIP-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
   }
+
+  public isProOrTrial(): boolean {
+    // If the plan is monthly, we must have variantId === "pro".
+    // If the plan is trial, it acts as a test of the PRO plan (full features).
+    if (this.plan === "trial") return true;
+    return this.variantId === "pro";
+  }
+
+  public canAccessReports(): boolean {
+    return this.isProOrTrial();
+  }
+
+  public canAccessExpenses(): boolean {
+    return this.isProOrTrial();
+  }
+
+  public canAccessOCR(): boolean {
+    return this.isProOrTrial();
+  }
+
+  public getMaxUsers(): number {
+    return this.isProOrTrial() ? 5 : 1;
+  }
+
+  public canAddUser(currentActiveUsersCount: number): boolean {
+    return currentActiveUsersCount < this.getMaxUsers();
+  }
 }

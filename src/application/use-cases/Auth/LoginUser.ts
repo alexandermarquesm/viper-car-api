@@ -78,6 +78,7 @@ export class LoginUser {
           creditCardFee: tenant.creditCardFee,
           debitCardFee: tenant.debitCardFee,
           inviteCode: tenant.inviteCode,
+          variantId: tenant.variantId,
         },
       },
     };

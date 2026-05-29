@@ -4,6 +4,7 @@ import { IUserRepository } from "../../application/repositories/IUserRepository"
 import { AppError } from "../../infrastructure/errors/AppError";
 import InviteModel from "../../infrastructure/database/mongoose-models/InviteModel";
 import TenantModel from "../../infrastructure/database/mongoose-models/TenantModel";
+import { Tenant } from "../../domain/entities/Tenant";
 import crypto from "crypto";
 
 export class TeamController {
@@ -29,10 +30,38 @@ export class TeamController {
       throw new AppError("Este usuário já pertence à sua equipe.", 409);
     }
 
-    // Get Tenant Name
+    // Get Tenant
     const tenant = await TenantModel.findById(tenantId);
     if (!tenant) {
       throw new AppError("Empresa não encontrada", 404);
+    }
+
+    const tenantEntity = new Tenant({
+      id: tenant.id,
+      name: tenant.name,
+      document: tenant.document,
+      status: tenant.status as any,
+      plan: tenant.plan as any,
+      subscriptionStatus: tenant.subscriptionStatus as any,
+      trialEndsAt: tenant.trialEndsAt,
+      createdAt: tenant.createdAt,
+      externalCustomerId: tenant.externalCustomerId,
+      externalSubscriptionId: tenant.externalSubscriptionId,
+      variantId: tenant.variantId,
+      currentPeriodEnd: tenant.currentPeriodEnd,
+      creditCardFee: tenant.creditCardFee,
+      debitCardFee: tenant.debitCardFee,
+      inviteCode: tenant.inviteCode,
+    });
+
+    const members = await this.userRepository.findAllByTenantId(tenantId);
+    const activeCount = members.filter(m => m.status === "active" || m.status === "inactive").length;
+
+    if (!tenantEntity.canAddUser(activeCount)) {
+      throw new AppError(
+        `Limite de colaboradores atingido para o seu plano (${tenantEntity.getMaxUsers()} usuário(s)). Faça upgrade para o plano PRO para adicionar mais colaboradores.`,
+        403
+      );
     }
 
     // Check for existing pending invites
@@ -105,6 +134,39 @@ export class TeamController {
       throw new AppError("Solicitação de colaborador não encontrada ou já processada.", 404);
     }
 
+    const tenant = await TenantModel.findById(tenantId);
+    if (!tenant) {
+      throw new AppError("Empresa não encontrada", 404);
+    }
+
+    const tenantEntity = new Tenant({
+      id: tenant.id,
+      name: tenant.name,
+      document: tenant.document,
+      status: tenant.status as any,
+      plan: tenant.plan as any,
+      subscriptionStatus: tenant.subscriptionStatus as any,
+      trialEndsAt: tenant.trialEndsAt,
+      createdAt: tenant.createdAt,
+      externalCustomerId: tenant.externalCustomerId,
+      externalSubscriptionId: tenant.externalSubscriptionId,
+      variantId: tenant.variantId,
+      currentPeriodEnd: tenant.currentPeriodEnd,
+      creditCardFee: tenant.creditCardFee,
+      debitCardFee: tenant.debitCardFee,
+      inviteCode: tenant.inviteCode,
+    });
+
+    const members = await this.userRepository.findAllByTenantId(tenantId);
+    const activeCount = members.filter(m => m.status === "active" || m.status === "inactive").length;
+
+    if (!tenantEntity.canAddUser(activeCount)) {
+      throw new AppError(
+        `Limite de colaboradores atingido para o seu plano (${tenantEntity.getMaxUsers()} usuário(s)). Faça upgrade para o plano PRO para adicionar mais colaboradores.`,
+        403
+      );
+    }
+
     worker.status = "active";
     await this.userRepository.save(worker);
 
@@ -174,6 +236,39 @@ export class TeamController {
     const invite = await InviteModel.findOne({ _id: id, email: user.email, status: "pending" });
     if (!invite) {
       throw new AppError("Convite não encontrado ou já expirado", 404);
+    }
+
+    const tenant = await TenantModel.findById(invite.tenantId);
+    if (!tenant) {
+      throw new AppError("Empresa associada ao convite não foi encontrada", 404);
+    }
+
+    const tenantEntity = new Tenant({
+      id: tenant.id,
+      name: tenant.name,
+      document: tenant.document,
+      status: tenant.status as any,
+      plan: tenant.plan as any,
+      subscriptionStatus: tenant.subscriptionStatus as any,
+      trialEndsAt: tenant.trialEndsAt,
+      createdAt: tenant.createdAt,
+      externalCustomerId: tenant.externalCustomerId,
+      externalSubscriptionId: tenant.externalSubscriptionId,
+      variantId: tenant.variantId,
+      currentPeriodEnd: tenant.currentPeriodEnd,
+      creditCardFee: tenant.creditCardFee,
+      debitCardFee: tenant.debitCardFee,
+      inviteCode: tenant.inviteCode,
+    });
+
+    const members = await this.userRepository.findAllByTenantId(invite.tenantId.toString());
+    const activeCount = members.filter(m => m.status === "active" || m.status === "inactive").length;
+
+    if (!tenantEntity.canAddUser(activeCount)) {
+      throw new AppError(
+        `Esta empresa já atingiu o limite de colaboradores do plano atual (${tenantEntity.getMaxUsers()} usuário(s)).`,
+        403
+      );
     }
 
     // Accept invite

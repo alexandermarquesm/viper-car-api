@@ -22,6 +22,7 @@ import { asyncHandler } from "./utils/AsyncHandler";
 import { WebhookController } from "../../../interface/controllers/WebhookController";
 import { ITenantRepository } from "../../../application/repositories/ITenantRepository";
 import { createSubscriptionMiddleware } from "./middlewares/SubscriptionMiddleware";
+import { createPlanLimitMiddleware } from "./middlewares/PlanLimitMiddleware";
 
 import { IUserRepository } from "../../../application/repositories/IUserRepository";
 
@@ -41,6 +42,7 @@ export const createApp = (
   app.set("trust proxy", 1);
   const authMiddleware = createAuthMiddleware(jwtSecret, userRepository, tenantRepository);
   const subscriptionMiddleware = createSubscriptionMiddleware(tenantRepository);
+  const planLimitMiddleware = createPlanLimitMiddleware(tenantRepository);
   
   // Security Middlewares
   app.use(helmet());
@@ -88,11 +90,11 @@ export const createApp = (
   app.use("/auth", createAuthRoutes(authController, authMiddleware, authLimiter));
 
   // Domain Routes (Protected & Subscription Required & Active status enforced)
-  app.get("/backup", authMiddleware, activeUserMiddleware, subscriptionMiddleware, asyncHandler((req: any, res: any) => serviceController.backup(req, res)));
-  app.use("/services", authMiddleware, activeUserMiddleware, subscriptionMiddleware, createServiceRoutes(serviceController));
+  app.get("/backup", authMiddleware, activeUserMiddleware, subscriptionMiddleware, planLimitMiddleware("reports"), asyncHandler((req: any, res: any) => serviceController.backup(req, res)));
+  app.use("/services", authMiddleware, activeUserMiddleware, subscriptionMiddleware, createServiceRoutes(serviceController, planLimitMiddleware));
   app.use("/clients", authMiddleware, activeUserMiddleware, subscriptionMiddleware, createClientRoutes(clientController));
   app.use("/team", authMiddleware, activeUserMiddleware, subscriptionMiddleware, createTeamRoutes(teamController));
-  app.use("/expenses", authMiddleware, activeUserMiddleware, subscriptionMiddleware, createExpenseRoutes(expenseController));
+  app.use("/expenses", authMiddleware, activeUserMiddleware, subscriptionMiddleware, planLimitMiddleware("expenses"), createExpenseRoutes(expenseController));
   
   // Subscription Routes (Protected, but does NOT require active subscription obviously)
   app.use("/subscriptions", authMiddleware, createSubscriptionRoutes(subscriptionController));
