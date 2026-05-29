@@ -1,7 +1,7 @@
 import ngrok from "@ngrok/ngrok";
 import dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 async function start() {
   try {

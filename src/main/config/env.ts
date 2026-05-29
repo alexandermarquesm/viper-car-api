@@ -18,8 +18,8 @@ const envSchema = z.object({
 
 export const loadEnv = () => {
   const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env.local";
-  dotenv.config({ path: path.resolve(__dirname, "..", "..", "..", envFile) });
-  dotenv.config(); // Fallback
+  dotenv.config({ path: path.resolve(__dirname, "..", "..", "..", envFile), quiet: true });
+  dotenv.config({ quiet: true }); // Fallback
 
   const parsed = envSchema.safeParse(process.env);
 
