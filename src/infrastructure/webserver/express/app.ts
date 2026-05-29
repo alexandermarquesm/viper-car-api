@@ -69,11 +69,11 @@ export const createApp = (
     message: { error: "Muitas tentativas de login ou registro, tente novamente mais tarde." },
   });
 
-  // Webhook Route (RAW BODY required for signature verification)
+  // Webhook Route — Stripe (RAW BODY obrigatório para verificação de assinatura)
   app.post(
-    "/webhooks/lemon-squeezy", 
+    "/webhooks/stripe",
     express.raw({ type: "application/json" }),
-    asyncHandler((req: Request, res: Response) => webhookController.handleLemonSqueezy(req, res))
+    asyncHandler((req: Request, res: Response) => webhookController.handleStripe(req, res))
   );
 
   app.use(express.json());

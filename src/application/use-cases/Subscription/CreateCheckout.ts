@@ -1,7 +1,9 @@
+import Stripe from "stripe";
 import { loadEnv } from "../../../main/config/env";
 
 interface CreateCheckoutRequest {
   tenantId: string;
+  plan: "basic" | "pro";
 }
 
 interface CreateCheckoutResponse {
@@ -10,70 +12,51 @@ interface CreateCheckoutResponse {
 
 export class CreateCheckout {
   async execute(request: CreateCheckoutRequest): Promise<CreateCheckoutResponse> {
-    const { tenantId } = request;
+    const { tenantId, plan } = request;
     const env = loadEnv();
-    
-    const apiKey = env.LEMON_SQUEEZY_API_KEY;
-    const storeId = env.LEMON_SQUEEZY_STORE_ID;
-    const variantId = env.LEMON_SQUEEZY_VARIANT_ID;
 
-    if (!apiKey || !storeId || !variantId) {
-      console.error("[CreateCheckout] ERRO: Variáveis do LemonSqueezy não configuradas.");
+    const secretKey = env.STRIPE_SECRET_KEY;
+    const priceIdBasic = env.STRIPE_PRICE_ID_BASIC;
+    const priceIdPro = env.STRIPE_PRICE_ID_PRO;
+
+    if (!secretKey || !priceIdBasic || !priceIdPro) {
+      console.error("[CreateCheckout] ERRO: Variáveis do Stripe não configuradas.");
       throw new Error("Configuração de pagamento incompleta no servidor.");
     }
 
-    const payload = {
-      data: {
-        type: "checkouts",
-        attributes: {
-          checkout_data: {
-            custom: {
-              tenantId: tenantId
-            }
-          }
-        },
-        relationships: {
-          store: {
-            data: {
-              type: "stores",
-              id: storeId
-            }
-          },
-          variant: {
-            data: {
-              type: "variants",
-              id: variantId
-            }
-          }
-        }
-      }
-    };
+    const stripe = new Stripe(secretKey);
+    const priceId = plan === "pro" ? priceIdPro : priceIdBasic;
 
     try {
-      const response = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
-        method: "POST",
-        headers: {
-          "Accept": "application/vnd.api+json",
-          "Content-Type": "application/vnd.api+json",
-          "Authorization": `Bearer ${apiKey}`
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        // Deep link para reabrir o app após o pagamento
+        success_url: "vipcar://success",
+        cancel_url: "vipcar://cancel",
+        // Passamos o tenantId e o plano nos metadados para o webhook
+        metadata: {
+          tenantId,
+          plan,
         },
-        body: JSON.stringify(payload)
+        subscription_data: {
+          metadata: {
+            tenantId,
+            plan,
+          },
+        },
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("[CreateCheckout] Erro na API LemonSqueezy:", errorText);
-        throw new Error("Falha ao se comunicar com o gateway de pagamento.");
+      if (!session.url) {
+        throw new Error("Stripe não retornou a URL de checkout.");
       }
 
-      const responseData = (await response.json()) as any;
-      const checkoutUrl = responseData.data?.attributes?.url;
-
-      if (!checkoutUrl) {
-        throw new Error("Gateway de pagamento não retornou a URL de checkout.");
-      }
-
-      return { checkoutUrl };
+      return { checkoutUrl: session.url };
     } catch (error: any) {
       console.error("[CreateCheckout] Exceção:", error.message);
       throw error;

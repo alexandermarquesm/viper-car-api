@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import crypto from "crypto";
+import Stripe from "stripe";
 import { ConfirmPayment } from "../../application/use-cases/Subscription/ConfirmPayment";
 import { loadEnv } from "../../main/config/env";
 import WebhookEventModel from "../../infrastructure/database/mongoose-models/WebhookEventModel";
@@ -7,85 +7,102 @@ import WebhookEventModel from "../../infrastructure/database/mongoose-models/Web
 export class WebhookController {
   constructor(private confirmPayment: ConfirmPayment) {}
 
-  async handleLemonSqueezy(req: Request, res: Response): Promise<void> {
+  async handleStripe(req: Request, res: Response): Promise<void> {
     const env = loadEnv();
-    const secret = env.LEMON_SQUEEZY_WEBHOOK_SECRET;
-    
-    if (!secret) {
-      console.error("[Webhook] Erro Crítico: LEMON_SQUEEZY_WEBHOOK_SECRET não configurado.");
+    const secret = env.STRIPE_SECRET_KEY;
+    const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
+
+    if (!secret || !webhookSecret) {
+      console.error("[Webhook Stripe] ERRO: STRIPE_SECRET_KEY ou STRIPE_WEBHOOK_SECRET não configurados.");
       res.status(500).json({ error: "Webhook secret não configurado" });
       return;
     }
 
-    const hmac = crypto.createHmac("sha256", secret);
-    const digest = Buffer.from(hmac.update(req.body).digest("hex"), "utf8");
-    const signature = Buffer.from(req.get("X-Signature") || "", "utf8");
+    const stripe = new Stripe(secret);
+    const signature = req.get("stripe-signature") || "";
 
-    if (!crypto.timingSafeEqual(digest, signature)) {
+    let event: ReturnType<typeof stripe.webhooks.constructEvent>;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
+    } catch (err: any) {
+      console.error("[Webhook Stripe] Assinatura inválida:", err.message);
       res.status(401).json({ error: "Assinatura inválida" });
       return;
     }
 
-    let payload;
-    try {
-      payload = JSON.parse(req.body.toString());
-    } catch (e) {
-      res.status(400).json({ error: "Payload inválido" });
+    // Idempotência — evita processar o mesmo evento duas vezes
+    const alreadyProcessed = await WebhookEventModel.findOne({ eventId: event.id });
+    if (alreadyProcessed) {
+      console.log(`[Webhook Stripe] Evento já processado: ${event.id}`);
+      res.status(200).send("OK");
       return;
     }
 
-    const eventId = payload.meta?.custom_data?.event_id || payload.meta?.event_id || req.get("X-Event-Id");
-    
-    if (eventId) {
-      // Verificação de idempotência
-      const alreadyProcessed = await WebhookEventModel.findOne({ eventId });
-      if (alreadyProcessed) {
-        console.log(`[Webhook] Evento já processado: ${eventId}`);
-        res.status(200).send("OK");
-        return;
-      }
-    }
+    try {
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object as Record<string, any>;
+        const tenantId = session.metadata?.tenantId as string | undefined;
+        const plan = (session.metadata?.plan as "basic" | "pro") || "basic";
 
-    const eventName = payload.meta?.event_name;
-    const customData = payload.meta?.custom_data;
-
-    // Apenas processamos eventos de assinatura
-    const allowedEvents = ["subscription_created", "subscription_updated", "subscription_cancelled", "subscription_expired", "order_created"];
-    if (allowedEvents.includes(eventName)) {
-      const tenantId = customData?.tenantId;
-      const externalCustomerId = String(payload.data?.attributes?.customer_id);
-      const externalSubscriptionId = String(payload.data?.id);
-      const variantId = String(payload.data?.attributes?.variant_id);
-      
-      const renewsAt = payload.data?.attributes?.renews_at;
-      const endsAt = payload.data?.attributes?.ends_at;
-      const currentPeriodEndStr = renewsAt || endsAt;
-      const currentPeriodEnd = currentPeriodEndStr ? new Date(currentPeriodEndStr) : undefined;
-      const status = payload.data?.attributes?.status;
-
-      if (tenantId) {
-        try {
-          await this.confirmPayment.execute({
-            tenantId,
-            externalCustomerId,
-            externalSubscriptionId,
-            variantId,
-            currentPeriodEnd,
-            status
-          });
-          console.log(`[Webhook] Assinatura processada para o Tenant: ${tenantId} | Status: ${status}`);
-          
-          if (eventId) {
-            await WebhookEventModel.create({ eventId });
-          }
-        } catch (error: any) {
-          console.error(`[Webhook] Erro ao confirmar pagamento: ${error.message}`);
-          res.status(500).json({ error: "Erro ao processar ativação" });
+        if (!tenantId) {
+          console.error("[Webhook Stripe] tenantId não encontrado nos metadados.");
+          res.status(400).json({ error: "tenantId ausente nos metadados" });
           return;
         }
+
+        await this.confirmPayment.execute({
+          tenantId,
+          externalCustomerId: String(session.customer),
+          externalSubscriptionId: String(session.subscription),
+          variantId: plan,
+          status: "active",
+        });
+
+        console.log(`[Webhook Stripe] Assinatura ativada | Tenant: ${tenantId} | Plano: ${plan}`);
+
+      } else if (event.type === "customer.subscription.deleted") {
+        const subscription = event.data.object as Record<string, any>;
+        const tenantId = subscription.metadata?.tenantId as string | undefined;
+
+        if (tenantId) {
+          await this.confirmPayment.execute({
+            tenantId,
+            externalCustomerId: String(subscription.customer),
+            externalSubscriptionId: subscription.id,
+            variantId: subscription.metadata?.plan || "basic",
+            status: "cancelled",
+          });
+          console.log(`[Webhook Stripe] Assinatura cancelada | Tenant: ${tenantId}`);
+        }
+
+      } else if (event.type === "customer.subscription.updated") {
+        const subscription = event.data.object as Record<string, any>;
+        const tenantId = subscription.metadata?.tenantId as string | undefined;
+        const status = subscription.status as string;
+
+        if (tenantId) {
+          const currentPeriodEnd = subscription.current_period_end
+            ? new Date((subscription.current_period_end as number) * 1000)
+            : undefined;
+
+          await this.confirmPayment.execute({
+            tenantId,
+            externalCustomerId: String(subscription.customer),
+            externalSubscriptionId: subscription.id,
+            variantId: subscription.metadata?.plan || "basic",
+            status,
+            currentPeriodEnd,
+          });
+          console.log(`[Webhook Stripe] Assinatura atualizada | Tenant: ${tenantId} | Status: ${status}`);
+        }
       }
+
+      await WebhookEventModel.create({ eventId: event.id });
+    } catch (error: any) {
+      console.error(`[Webhook Stripe] Erro ao processar evento: ${error.message}`);
+      res.status(500).json({ error: "Erro ao processar evento" });
+      return;
     }
 
-    res.status(200).send("OK");
   }
 }

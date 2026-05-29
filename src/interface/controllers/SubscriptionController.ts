@@ -11,9 +11,12 @@ export class SubscriptionController {
       return;
     }
 
+    const plan = req.body?.plan === "pro" ? "pro" : "basic";
+
     try {
       const { checkoutUrl } = await this.createCheckout.execute({
-        tenantId: req.user.tenantId
+        tenantId: req.user.tenantId,
+        plan,
       });
 
       res.status(200).json({ url: checkoutUrl });
