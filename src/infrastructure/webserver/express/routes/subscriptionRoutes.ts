@@ -6,6 +6,7 @@ export const createSubscriptionRoutes = (subscriptionController: SubscriptionCon
   const router = Router();
 
   router.post("/checkout", asyncHandler((req: any, res: any) => subscriptionController.checkout(req, res)));
+  router.post("/portal", asyncHandler((req: any, res: any) => subscriptionController.portal(req, res)));
 
   return router;
 };
