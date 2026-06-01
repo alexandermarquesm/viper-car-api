@@ -29,7 +29,7 @@ export class CreateCustomerPortal {
     }
 
     if (!tenant.externalCustomerId) {
-      throw new Error("Você não possui uma assinatura ativa para gerenciar.");
+      throw new Error("Você possui uma assinatura ativa manualmente (ou de cortesia) que não está vinculada ao Stripe.");
     }
 
     const stripe = new Stripe(secretKey);
