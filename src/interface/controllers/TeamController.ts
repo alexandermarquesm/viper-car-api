@@ -200,22 +200,11 @@ export class TeamController {
       throw new AppError("Membro não encontrado na sua equipe", 404);
     }
 
-    // Como o usuário tem a conta dele, se removermos, não deletamos do banco,
-    // apenas retornamos ele pro seu "estado isolado" (usando o id dele mesmo como tenantId, ou algo que invalide o acesso aos dados do dono).
-    // O mais seguro para um "revert": criar um tenantId fantasma para ele ou simplesmente banir. 
-    // Mas ele tem o tenantId original dele (que seria o proprio user ID na criacao original).
-    // Como nao salvamos o tenant anterior, vamos criar um novo tenant "isolado" para ele.
-    const newTenant = await TenantModel.create({
-      _id: crypto.randomUUID(),
-      name: `Conta Isolada (${member.name})`,
-      plan: "trial",
-      trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-    });
-
-    member.tenantId = newTenant._id.toString();
-    member.role = "owner";
-    member.status = "active";
-    await this.userRepository.save(member);
+    // Deleção Completa do Funcionário: Como colaboradores não possuem dados ou histórico
+    // próprio (as lavagens e histórico pertencem ao lava-rápido/tenant), ao serem excluídos
+    // da equipe, a conta dele é completamente apagada do banco de dados para liberar seu e-mail
+    // e evitar contas fantasmas ocupando espaço.
+    await this.userRepository.delete(id);
 
     res.status(204).send();
   }
