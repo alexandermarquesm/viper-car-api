@@ -16,6 +16,9 @@ export class MongooseUserRepository implements IUserRepository {
       role: doc.role as any,
       status: doc.status as any,
       createdAt: doc.createdAt,
+      isEmailVerified: doc.isEmailVerified,
+      emailVerificationCode: doc.emailVerificationCode,
+      emailVerificationExpiresAt: doc.emailVerificationExpiresAt,
     });
   }
 
@@ -32,6 +35,9 @@ export class MongooseUserRepository implements IUserRepository {
       role: doc.role as any,
       status: doc.status as any,
       createdAt: doc.createdAt,
+      isEmailVerified: doc.isEmailVerified,
+      emailVerificationCode: doc.emailVerificationCode,
+      emailVerificationExpiresAt: doc.emailVerificationExpiresAt,
     });
   }
 
@@ -47,6 +53,9 @@ export class MongooseUserRepository implements IUserRepository {
         role: user.role,
         status: user.status,
         createdAt: user.createdAt,
+        isEmailVerified: user.isEmailVerified,
+        emailVerificationCode: user.emailVerificationCode,
+        emailVerificationExpiresAt: user.emailVerificationExpiresAt,
       },
       { returnDocument: 'after', upsert: true }
     );
@@ -65,6 +74,9 @@ export class MongooseUserRepository implements IUserRepository {
       role: doc.role as any,
       status: doc.status as any,
       createdAt: doc.createdAt,
+      isEmailVerified: doc.isEmailVerified,
+      emailVerificationCode: doc.emailVerificationCode,
+      emailVerificationExpiresAt: doc.emailVerificationExpiresAt,
     }));
   }
 

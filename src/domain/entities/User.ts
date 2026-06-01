@@ -10,6 +10,9 @@ export interface IUserProps {
   role?: "owner" | "admin" | "worker";
   status?: "active" | "inactive" | "pending";
   createdAt?: Date;
+  isEmailVerified?: boolean;
+  emailVerificationCode?: string;
+  emailVerificationExpiresAt?: Date;
 }
 
 export class User {
@@ -22,6 +25,9 @@ export class User {
   public role: "owner" | "admin" | "worker";
   public status: "active" | "inactive" | "pending";
   public readonly createdAt: Date;
+  public isEmailVerified: boolean;
+  public emailVerificationCode?: string;
+  public emailVerificationExpiresAt?: Date;
 
   constructor(props: IUserProps) {
     this.id = props.id || crypto.randomUUID();
@@ -33,5 +39,8 @@ export class User {
     this.role = props.role || "worker";
     this.status = props.status || "active";
     this.createdAt = props.createdAt || new Date();
+    this.isEmailVerified = props.isEmailVerified !== undefined ? props.isEmailVerified : false;
+    this.emailVerificationCode = props.emailVerificationCode;
+    this.emailVerificationExpiresAt = props.emailVerificationExpiresAt;
   }
 }

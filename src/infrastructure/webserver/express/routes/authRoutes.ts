@@ -23,6 +23,16 @@ export const createAuthRoutes = (authController: AuthController, authMiddleware:
     asyncHandler((req: any, res: any) => authController.login(req, res))
   );
 
+  router.post(
+    "/verify-email",
+    asyncHandler((req: any, res: any) => authController.verifyEmail(req, res))
+  );
+
+  router.post(
+    "/resend-code",
+    asyncHandler((req: any, res: any) => authController.resendCode(req, res))
+  );
+
   router.get(
     "/me",
     authMiddleware,

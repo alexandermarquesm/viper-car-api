@@ -2,6 +2,7 @@ import { Tenant } from "../../../domain/entities/Tenant";
 import { User } from "../../../domain/entities/User";
 import { ITenantRepository } from "../../repositories/ITenantRepository";
 import { IUserRepository } from "../../repositories/IUserRepository";
+import { IEmailService } from "../../protocols/IEmailService";
 import bcrypt from "bcryptjs";
 
 export interface RegisterTenantInput {
@@ -17,7 +18,8 @@ export interface RegisterTenantInput {
 export class RegisterTenant {
   constructor(
     private tenantRepository: ITenantRepository,
-    private userRepository: IUserRepository
+    private userRepository: IUserRepository,
+    private emailService: IEmailService
   ) {}
 
   async execute(input: RegisterTenantInput) {
@@ -31,6 +33,10 @@ export class RegisterTenant {
     // Hash Password
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(input.passwordRaw, salt);
+
+    // Generate 6-digit OTP code
+    const emailVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const emailVerificationExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
 
     if (input.role === "worker") {
       if (!input.inviteCode) {
@@ -49,8 +55,13 @@ export class RegisterTenant {
         passwordHash,
         role: "worker",
         status: "pending",
+        isEmailVerified: false,
+        emailVerificationCode,
+        emailVerificationExpiresAt,
       });
       const savedUser = await this.userRepository.save(user);
+
+      await this.emailService.sendVerificationEmail(cleanEmail, emailVerificationCode);
 
       return {
         success: true,
@@ -77,8 +88,13 @@ export class RegisterTenant {
         passwordHash,
         role: "owner",
         status: "active",
+        isEmailVerified: false,
+        emailVerificationCode,
+        emailVerificationExpiresAt,
       });
       const savedUser = await this.userRepository.save(user);
+
+      await this.emailService.sendVerificationEmail(cleanEmail, emailVerificationCode);
 
       return {
         success: true,

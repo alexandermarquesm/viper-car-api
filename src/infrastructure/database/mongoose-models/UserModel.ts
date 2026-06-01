@@ -10,6 +10,9 @@ export interface IUserDocument extends Document<string> {
   role: "owner" | "admin" | "worker";
   status: "active" | "inactive" | "pending";
   createdAt: Date;
+  isEmailVerified: boolean;
+  emailVerificationCode?: string;
+  emailVerificationExpiresAt?: Date;
 }
 
 const userSchema = new Schema<IUserDocument>({
@@ -22,6 +25,9 @@ const userSchema = new Schema<IUserDocument>({
   role: { type: String, default: "worker" },
   status: { type: String, default: "active", index: true },
   createdAt: { type: Date, default: Date.now },
+  isEmailVerified: { type: Boolean, default: false },
+  emailVerificationCode: { type: String, index: { sparse: true } },
+  emailVerificationExpiresAt: { type: Date },
 });
 
 export default mongoose.model<IUserDocument>("User", userSchema);

@@ -1,55 +1,54 @@
 import { IUserRepository } from "../../repositories/IUserRepository";
 import { ITenantRepository } from "../../repositories/ITenantRepository";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import TenantModel from "../../../infrastructure/database/mongoose-models/TenantModel";
 
-export interface LoginUserInput {
+export interface VerifyEmailInput {
   email: string;
-  passwordRaw: string;
+  code: string;
 }
 
-export class LoginUser {
+export class VerifyEmail {
   constructor(
     private userRepository: IUserRepository,
     private tenantRepository: ITenantRepository,
     private jwtSecret: string
   ) {}
 
-  async execute({ email, passwordRaw }: LoginUserInput) {
+  async execute({ email, code }: VerifyEmailInput) {
     const cleanEmail = email.toLowerCase().trim();
+    const cleanCode = code.trim();
+
     const user = await this.userRepository.findByEmail(cleanEmail);
     if (!user) {
-      throw new Error("E-mail ou senha incorretos.");
+      throw new Error("Usuário não encontrado.");
     }
 
-    const isMatch = await bcrypt.compare(passwordRaw, user.passwordHash);
-    if (!isMatch) {
-      throw new Error("E-mail ou senha incorretos.");
+    if (user.isEmailVerified) {
+      throw new Error("Este e-mail já está confirmado.");
+    }
+
+    if (!user.emailVerificationCode || user.emailVerificationCode !== cleanCode) {
+      throw new Error("Código de confirmação incorreto.");
+    }
+
+    if (user.emailVerificationExpiresAt && new Date() > user.emailVerificationExpiresAt) {
+      throw new Error("Código de confirmação expirado.");
+    }
+
+    // Mark as verified
+    user.isEmailVerified = true;
+    user.emailVerificationCode = undefined;
+    user.emailVerificationExpiresAt = undefined;
+
+    await this.userRepository.save(user);
+
+    // Instant Log in
+    const tenant = await this.tenantRepository.findById(user.tenantId);
+    if (!tenant) {
+      throw new Error("Empresa (Tenant) não encontrada.");
     }
 
     const secret = this.jwtSecret;
-
-    if (user.status === "inactive") {
-      throw new Error("Usuário inativo.");
-    }
-
-    if (!user.isEmailVerified) {
-      throw new Error("EMAIL_NOT_VERIFIED");
-    }
-
-    const tenant = await this.tenantRepository.findById(user.tenantId);
-    if (!tenant) {
-      throw new Error("Sua conta está corrompida: Empresa (Tenant) não encontrada.");
-    }
-
-    // Persist inviteCode if it was lazily generated
-    const doc = await TenantModel.findById(user.tenantId);
-    if (doc && !doc.inviteCode) {
-      doc.inviteCode = tenant.inviteCode;
-      await doc.save();
-    }
-
     const tokenExpiration = tenant.plan === "monthly" ? "30d" : "7d";
 
     const token = jwt.sign(
