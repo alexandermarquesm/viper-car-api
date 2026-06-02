@@ -48,7 +48,7 @@ export const createApp = (
   app.use(helmet());
   app.use(
     cors({
-      origin: ["https://vipcar.com.br", "http://localhost:3000", "http://localhost:8081", "exp://localhost:8081"], // Add frontend URLs and Expo origins here
+      origin: ["https://vipercar.com.br", "http://localhost:3000", "http://localhost:8081", "exp://localhost:8081"], // Add frontend URLs and Expo origins here
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
       credentials: true,
     })
@@ -83,7 +83,7 @@ export const createApp = (
 
   // Health Check
   app.get("/", (req: Request, res: Response) => {
-    res.send("VIP CAR Backend (TypeScript + Clean Architecture) está rodando! 🚗💨");
+    res.send("VIPER CAR Backend (TypeScript + Clean Architecture) está rodando! 🚗💨");
   });
 
   // Auth Routes (Public)

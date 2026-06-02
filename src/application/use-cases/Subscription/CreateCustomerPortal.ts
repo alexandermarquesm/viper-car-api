@@ -37,7 +37,7 @@ export class CreateCustomerPortal {
     try {
       const session = await stripe.billingPortal.sessions.create({
         customer: tenant.externalCustomerId,
-        return_url: "vipcar://success", // Redireciona de volta para o app
+        return_url: "vipercar://success", // Redireciona de volta para o app
       });
 
       if (!session.url) {

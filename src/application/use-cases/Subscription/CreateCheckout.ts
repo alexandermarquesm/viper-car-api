@@ -37,8 +37,8 @@ export class CreateCheckout {
           },
         ],
         // Deep link para reabrir o app após o pagamento
-        success_url: "vipcar://success",
-        cancel_url: "vipcar://cancel",
+        success_url: "vipercar://success",
+        cancel_url: "vipercar://cancel",
         // Passamos o tenantId e o plano nos metadados para o webhook
         metadata: {
           tenantId,
