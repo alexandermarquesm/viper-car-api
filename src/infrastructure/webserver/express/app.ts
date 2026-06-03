@@ -36,7 +36,8 @@ export const createApp = (
   expenseController: ExpenseController,
   tenantRepository: ITenantRepository,
   userRepository: IUserRepository,
-  jwtSecret: string
+  jwtSecret: string,
+  corsAllowedOrigins?: string
 ): Express => {
   const app = express();
   app.set("trust proxy", 1);
@@ -46,9 +47,31 @@ export const createApp = (
   
   // Security Middlewares
   app.use(helmet());
+
+  const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
+  
+  let allowedOrigins: string[];
+  if (corsAllowedOrigins) {
+    allowedOrigins = corsAllowedOrigins.split(",").map(origin => origin.trim());
+  } else {
+    allowedOrigins = [
+      "https://vipercar.com.br",
+      "https://vip-car-website.vercel.app",
+      "https://vip-car-app.vercel.app"
+    ];
+    if (!isProduction) {
+      allowedOrigins.push(
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:8081",
+        "exp://localhost:8081"
+      );
+    }
+  }
+
   app.use(
     cors({
-      origin: ["https://vipercar.com.br", "http://localhost:3000", "http://localhost:8081", "exp://localhost:8081"], // Add frontend URLs and Expo origins here
+      origin: allowedOrigins,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
       credentials: true,
     })

@@ -14,6 +14,7 @@ const envSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   STRIPE_PRICE_ID_BASIC: z.string().optional(),
   STRIPE_PRICE_ID_PRO: z.string().optional(),
+  CORS_ALLOWED_ORIGINS: z.string().optional(),
 });
 
 export const loadEnv = () => {

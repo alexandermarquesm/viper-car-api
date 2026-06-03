@@ -52,7 +52,8 @@ const getApp = async () => {
     expenseController,
     tenantRepository, 
     userRepository,
-    env.JWT_SECRET
+    env.JWT_SECRET,
+    env.CORS_ALLOWED_ORIGINS
   );
   return appInstance;
 };
