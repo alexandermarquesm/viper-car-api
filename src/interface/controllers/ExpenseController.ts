@@ -3,12 +3,14 @@ import { AuthenticatedRequest } from "../../infrastructure/webserver/express/mid
 import { CreateExpense } from "../../application/use-cases/CreateExpense";
 import { ListExpenses } from "../../application/use-cases/ListExpenses";
 import { DeleteExpense } from "../../application/use-cases/DeleteExpense";
+import { UpdateExpense } from "../../application/use-cases/UpdateExpense";
 
 export class ExpenseController {
   constructor(
     private createExpense: CreateExpense,
     private listExpenses: ListExpenses,
-    private deleteExpense: DeleteExpense
+    private deleteExpense: DeleteExpense,
+    private updateExpense: UpdateExpense,
   ) {}
 
   async create(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -47,5 +49,21 @@ export class ExpenseController {
     });
 
     res.json({ success: result });
+  }
+
+  async update(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const { id } = req.params;
+    const { description, amount, category, date } = req.body;
+
+    const result = await this.updateExpense.execute({
+      id,
+      tenantId: req.user!.tenantId,
+      description,
+      amount: Number(amount),
+      category,
+      date,
+    });
+
+    res.json(result);
   }
 }

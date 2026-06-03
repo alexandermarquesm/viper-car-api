@@ -12,6 +12,7 @@ export const createExpenseRoutes = (expenseController: ExpenseController): Route
   router.get("/", asyncHandler((req: any, res: any) => expenseController.list(req, res)));
   router.post("/", asyncHandler((req: any, res: any) => expenseController.create(req, res)));
   router.delete("/:id", asyncHandler((req: any, res: any) => expenseController.delete(req, res)));
+  router.put("/:id", asyncHandler((req: any, res: any) => expenseController.update(req, res)));
 
   return router;
 };

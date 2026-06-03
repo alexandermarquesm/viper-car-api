@@ -2,6 +2,7 @@ import { MongooseExpenseRepository } from "../../../interface/repositories/Mongo
 import { CreateExpense } from "../../../application/use-cases/CreateExpense";
 import { ListExpenses } from "../../../application/use-cases/ListExpenses";
 import { DeleteExpense } from "../../../application/use-cases/DeleteExpense";
+import { UpdateExpense } from "../../../application/use-cases/UpdateExpense";
 import { ExpenseController } from "../../../interface/controllers/ExpenseController";
 
 export const makeExpenseController = (): ExpenseController => {
@@ -10,10 +11,12 @@ export const makeExpenseController = (): ExpenseController => {
   const createExpense = new CreateExpense(expenseRepository);
   const listExpenses = new ListExpenses(expenseRepository);
   const deleteExpense = new DeleteExpense(expenseRepository);
+  const updateExpense = new UpdateExpense(expenseRepository);
 
   return new ExpenseController(
     createExpense,
     listExpenses,
-    deleteExpense
+    deleteExpense,
+    updateExpense
   );
 };
