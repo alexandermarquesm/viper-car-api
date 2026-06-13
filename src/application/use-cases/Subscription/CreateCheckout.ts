@@ -4,6 +4,8 @@ import { loadEnv } from "../../../main/config/env";
 interface CreateCheckoutRequest {
   tenantId: string;
   plan: "basic" | "pro";
+  redirectUrl?: string;
+  apiBaseUrl: string;
 }
 
 interface CreateCheckoutResponse {
@@ -12,7 +14,7 @@ interface CreateCheckoutResponse {
 
 export class CreateCheckout {
   async execute(request: CreateCheckoutRequest): Promise<CreateCheckoutResponse> {
-    const { tenantId, plan } = request;
+    const { tenantId, plan, redirectUrl, apiBaseUrl } = request;
     const env = loadEnv();
 
     const secretKey = env.STRIPE_SECRET_KEY;
@@ -28,6 +30,22 @@ export class CreateCheckout {
     const priceId = plan === "pro" ? priceIdPro : priceIdBasic;
 
     try {
+      let finalSuccessUrl = "vipercar://success";
+      let finalCancelUrl = "vipercar://cancel";
+
+      if (redirectUrl) {
+        const isDev = env.NODE_ENV !== "production";
+        const isValidAppScheme = redirectUrl.startsWith("vipercar://");
+        const isValidExpoScheme = isDev && (redirectUrl.startsWith("exp://") || redirectUrl.startsWith("http://localhost") || redirectUrl.startsWith("http://192.168."));
+
+        if (isValidAppScheme || isValidExpoScheme) {
+          finalSuccessUrl = redirectUrl;
+          finalCancelUrl = redirectUrl.replace("success", "cancel");
+        } else {
+          console.warn(`[CreateCheckout] URL de redirecionamento rejeitada por segurança: ${redirectUrl}`);
+        }
+      }
+
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         line_items: [
@@ -36,9 +54,8 @@ export class CreateCheckout {
             quantity: 1,
           },
         ],
-        // Deep link para reabrir o app após o pagamento
-        success_url: "vipercar://success",
-        cancel_url: "vipercar://cancel",
+        success_url: finalSuccessUrl,
+        cancel_url: finalCancelUrl,
         // Passamos o tenantId e o plano nos metadados para o webhook
         metadata: {
           tenantId,

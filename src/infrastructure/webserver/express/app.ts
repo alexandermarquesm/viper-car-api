@@ -119,6 +119,12 @@ export const createApp = (
   app.use("/team", authMiddleware, activeUserMiddleware, subscriptionMiddleware, createTeamRoutes(teamController));
   app.use("/expenses", authMiddleware, activeUserMiddleware, subscriptionMiddleware, planLimitMiddleware("expenses"), createExpenseRoutes(expenseController));
   
+  // Public subscription success page (Stripe redirect)
+  app.get(
+    "/subscriptions/success",
+    asyncHandler((req: Request, res: Response) => subscriptionController.successPage(req, res))
+  );
+
   // Subscription Routes (Protected, but does NOT require active subscription obviously)
   app.use("/subscriptions", authMiddleware, createSubscriptionRoutes(subscriptionController));
 
