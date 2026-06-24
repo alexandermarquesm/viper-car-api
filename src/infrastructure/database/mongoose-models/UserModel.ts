@@ -13,6 +13,8 @@ export interface IUserDocument extends Document<string> {
   isEmailVerified: boolean;
   emailVerificationCode?: string;
   emailVerificationExpiresAt?: Date;
+  passwordResetCode?: string;
+  passwordResetExpiresAt?: Date;
 }
 
 const userSchema = new Schema<IUserDocument>({
@@ -28,6 +30,8 @@ const userSchema = new Schema<IUserDocument>({
   isEmailVerified: { type: Boolean, default: false },
   emailVerificationCode: { type: String, index: { sparse: true } },
   emailVerificationExpiresAt: { type: Date },
+  passwordResetCode: { type: String, index: { sparse: true } },
+  passwordResetExpiresAt: { type: Date },
 });
 
 export default mongoose.model<IUserDocument>("User", userSchema);

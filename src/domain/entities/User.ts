@@ -13,6 +13,8 @@ export interface IUserProps {
   isEmailVerified?: boolean;
   emailVerificationCode?: string;
   emailVerificationExpiresAt?: Date;
+  passwordResetCode?: string;
+  passwordResetExpiresAt?: Date;
 }
 
 export class User {
@@ -28,6 +30,8 @@ export class User {
   public isEmailVerified: boolean;
   public emailVerificationCode?: string;
   public emailVerificationExpiresAt?: Date;
+  public passwordResetCode?: string;
+  public passwordResetExpiresAt?: Date;
 
   constructor(props: IUserProps) {
     this.id = props.id || crypto.randomUUID();
@@ -42,5 +46,7 @@ export class User {
     this.isEmailVerified = props.isEmailVerified !== undefined ? props.isEmailVerified : false;
     this.emailVerificationCode = props.emailVerificationCode;
     this.emailVerificationExpiresAt = props.emailVerificationExpiresAt;
+    this.passwordResetCode = props.passwordResetCode;
+    this.passwordResetExpiresAt = props.passwordResetExpiresAt;
   }
 }

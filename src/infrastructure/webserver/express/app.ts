@@ -79,7 +79,7 @@ export const createApp = (
 
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+    max: isProduction ? 100 : 10000, // Limit each IP to 100 requests per `window` (here, per 15 minutes) - relaxed in dev
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     message: { error: "Muitas requisições deste IP, tente novamente em 15 minutos." },
@@ -88,7 +88,7 @@ export const createApp = (
 
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // Limit each IP to 10 requests per 15 minutes for auth
+    max: isProduction ? 10 : 1000, // Limit each IP to 10 requests per 15 minutes for auth - relaxed in dev
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: "Muitas tentativas de login ou registro, tente novamente mais tarde." },

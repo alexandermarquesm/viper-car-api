@@ -19,6 +19,8 @@ export class MongooseUserRepository implements IUserRepository {
       isEmailVerified: doc.isEmailVerified,
       emailVerificationCode: doc.emailVerificationCode,
       emailVerificationExpiresAt: doc.emailVerificationExpiresAt,
+      passwordResetCode: doc.passwordResetCode,
+      passwordResetExpiresAt: doc.passwordResetExpiresAt,
     });
   }
 
@@ -38,6 +40,8 @@ export class MongooseUserRepository implements IUserRepository {
       isEmailVerified: doc.isEmailVerified,
       emailVerificationCode: doc.emailVerificationCode,
       emailVerificationExpiresAt: doc.emailVerificationExpiresAt,
+      passwordResetCode: doc.passwordResetCode,
+      passwordResetExpiresAt: doc.passwordResetExpiresAt,
     });
   }
 
@@ -56,6 +60,8 @@ export class MongooseUserRepository implements IUserRepository {
         isEmailVerified: user.isEmailVerified,
         emailVerificationCode: user.emailVerificationCode,
         emailVerificationExpiresAt: user.emailVerificationExpiresAt,
+        passwordResetCode: user.passwordResetCode,
+        passwordResetExpiresAt: user.passwordResetExpiresAt,
       },
       { returnDocument: 'after', upsert: true }
     );
@@ -77,6 +83,8 @@ export class MongooseUserRepository implements IUserRepository {
       isEmailVerified: doc.isEmailVerified,
       emailVerificationCode: doc.emailVerificationCode,
       emailVerificationExpiresAt: doc.emailVerificationExpiresAt,
+      passwordResetCode: doc.passwordResetCode,
+      passwordResetExpiresAt: doc.passwordResetExpiresAt,
     }));
   }
 

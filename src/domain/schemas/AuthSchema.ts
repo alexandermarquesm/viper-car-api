@@ -27,6 +27,31 @@ export const LoginUserSchema = z.object({
   }),
 });
 
+export const ForgotPasswordSchema = z.object({
+  body: z.object({
+    email: z.string().email("E-mail inválido"),
+  }),
+});
+
+export const VerifyResetCodeSchema = z.object({
+  body: z.object({
+    email: z.string().email("E-mail inválido"),
+    code: z.string().length(6, "O código deve ter 6 dígitos"),
+  }),
+});
+
+export const ResetPasswordSchema = z.object({
+  body: z.object({
+    email: z.string().email("E-mail inválido"),
+    code: z.string().length(6, "O código deve ter 6 dígitos"),
+    passwordRaw: z.string().min(6, "A senha deve ter pelo menos 6 caracteres"),
+  }),
+});
+
 export type RegisterUserInput = z.infer<typeof RegisterUserSchema>["body"];
 export type LoginUserInput = z.infer<typeof LoginUserSchema>["body"];
+export type ForgotPasswordInput = z.infer<typeof ForgotPasswordSchema>["body"];
+export type VerifyResetCodeInput = z.infer<typeof VerifyResetCodeSchema>["body"];
+export type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>["body"];
+
 

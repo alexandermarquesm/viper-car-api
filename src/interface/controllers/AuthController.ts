@@ -4,6 +4,9 @@ import { LoginUser } from "../../application/use-cases/Auth/LoginUser";
 import { GetUserInfo } from "../../application/use-cases/Auth/GetUserInfo";
 import { VerifyEmail } from "../../application/use-cases/Auth/VerifyEmail";
 import { ResendVerificationCode } from "../../application/use-cases/Auth/ResendVerificationCode";
+import { SendPasswordResetCode } from "../../application/use-cases/Auth/SendPasswordResetCode";
+import { VerifyPasswordResetCode } from "../../application/use-cases/Auth/VerifyPasswordResetCode";
+import { ResetPassword } from "../../application/use-cases/Auth/ResetPassword";
 import { AppError } from "../../infrastructure/errors/AppError";
 import { ITenantRepository } from "../../application/repositories/ITenantRepository";
 
@@ -14,7 +17,10 @@ export class AuthController {
     private getUserInfo: GetUserInfo,
     private tenantRepository: ITenantRepository,
     private verifyEmailUseCase: VerifyEmail,
-    private resendVerificationCodeUseCase: ResendVerificationCode
+    private resendVerificationCodeUseCase: ResendVerificationCode,
+    private sendPasswordResetCode: SendPasswordResetCode,
+    private verifyPasswordResetCode: VerifyPasswordResetCode,
+    private resetPasswordUseCase: ResetPassword
   ) {}
 
   async register(req: Request, res: Response): Promise<void> {
@@ -145,6 +151,36 @@ export class AuthController {
       });
     } catch (error: any) {
       throw new AppError(error.message, 500);
+    }
+  }
+
+  async forgotPassword(req: Request, res: Response): Promise<void> {
+    const { email } = req.body;
+    try {
+      const result = await this.sendPasswordResetCode.execute({ email });
+      res.json(result);
+    } catch (error: any) {
+      throw new AppError(error.message, 400);
+    }
+  }
+
+  async verifyResetCode(req: Request, res: Response): Promise<void> {
+    const { email, code } = req.body;
+    try {
+      const result = await this.verifyPasswordResetCode.execute({ email, code });
+      res.json(result);
+    } catch (error: any) {
+      throw new AppError(error.message, 400);
+    }
+  }
+
+  async resetPassword(req: Request, res: Response): Promise<void> {
+    const { email, code, passwordRaw } = req.body;
+    try {
+      const result = await this.resetPasswordUseCase.execute({ email, code, passwordRaw });
+      res.json(result);
+    } catch (error: any) {
+      throw new AppError(error.message, 400);
     }
   }
 }

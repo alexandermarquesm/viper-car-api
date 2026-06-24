@@ -76,7 +76,6 @@ export class RegisterTenant {
       // 1. Create Tenant (defaults to 7 days trial in entity constructor)
       const tenant = new Tenant({
         name: input.tenantName,
-        document: input.document,
       });
       const savedTenant = await this.tenantRepository.save(tenant);
 
