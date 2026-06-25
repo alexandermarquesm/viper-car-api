@@ -109,6 +109,15 @@ export const createApp = (
     res.send("VIPER CAR Backend (TypeScript + Clean Architecture) está rodando! 🚗💨");
   });
 
+  // Mobile Version Check (Public)
+  app.get("/status/mobile-version", (req: Request, res: Response) => {
+    res.json({
+      version: "2.1.0",
+      apkUrl: "https://github.com/alexandermarquesm/viper-car-website/releases/download/v2.1.0/viper-car-2.1.0.apk",
+      required: false
+    });
+  });
+
   // Auth Routes (Public)
   app.use("/auth", createAuthRoutes(authController, authMiddleware, authLimiter));
 
