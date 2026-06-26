@@ -48,6 +48,7 @@ export class CreateCheckout {
 
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
+        allow_promotion_codes: true,
         line_items: [
           {
             price: priceId,

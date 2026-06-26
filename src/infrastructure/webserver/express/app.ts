@@ -1,5 +1,6 @@
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
+import Stripe from "stripe";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { createServiceRoutes } from "./routes/serviceRoutes";
@@ -116,6 +117,51 @@ export const createApp = (
       apkUrl: "https://github.com/alexandermarquesm/viper-car-website/releases/download/v2.1.0/viper-car-2.1.0.apk",
       required: false
     });
+  });
+
+  // Plans Pricing Check (Public)
+  app.get("/status/plans", async (req: Request, res: Response) => {
+    try {
+      const secretKey = process.env.STRIPE_SECRET_KEY;
+      const priceIdBasic = process.env.STRIPE_PRICE_ID_BASIC;
+      const priceIdPro = process.env.STRIPE_PRICE_ID_PRO;
+
+      if (!secretKey || !priceIdBasic || !priceIdPro) {
+        return res.json({
+          basic: "49,90",
+          pro: "89,90"
+        });
+      }
+
+      const stripe = new Stripe(secretKey);
+
+      // Busca os preços em paralelo da Stripe
+      const [priceBasic, pricePro] = await Promise.all([
+        stripe.prices.retrieve(priceIdBasic),
+        stripe.prices.retrieve(priceIdPro)
+      ]);
+
+      const formatStripePrice = (price: any) => {
+        if (!price.unit_amount) return "0,00";
+        const val = price.unit_amount / 100;
+        return val.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      };
+
+      res.json({
+        basic: formatStripePrice(priceBasic),
+        pro: formatStripePrice(pricePro)
+      });
+    } catch (error) {
+      console.error("Erro ao buscar preços do Stripe:", error);
+      // Fallback seguro em caso de falha de conexão com a Stripe
+      res.json({
+        basic: "49,90",
+        pro: "89,90"
+      });
+    }
   });
 
   // Auth Routes (Public)
