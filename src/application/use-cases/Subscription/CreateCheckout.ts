@@ -4,6 +4,7 @@ import { loadEnv } from "../../../main/config/env";
 interface CreateCheckoutRequest {
   tenantId: string;
   plan: "basic" | "pro";
+  currency?: string; // "BRL" | "USD" | "EUR"
   redirectUrl?: string;
   apiBaseUrl: string;
 }
@@ -14,20 +15,42 @@ interface CreateCheckoutResponse {
 
 export class CreateCheckout {
   async execute(request: CreateCheckoutRequest): Promise<CreateCheckoutResponse> {
-    const { tenantId, plan, redirectUrl, apiBaseUrl } = request;
+    const { tenantId, plan, currency, redirectUrl, apiBaseUrl } = request;
     const env = loadEnv();
 
     const secretKey = env.STRIPE_SECRET_KEY;
-    const priceIdBasic = env.STRIPE_PRICE_ID_BASIC;
-    const priceIdPro = env.STRIPE_PRICE_ID_PRO;
+    const priceIdBasicBRL = env.STRIPE_PRICE_ID_BASIC;
+    const priceIdProBRL = env.STRIPE_PRICE_ID_PRO;
+    const priceIdBasicUSD = env.STRIPE_PRICE_ID_BASIC_USD;
+    const priceIdProUSD = env.STRIPE_PRICE_ID_PRO_USD;
+    const priceIdBasicEUR = env.STRIPE_PRICE_ID_BASIC_EUR;
+    const priceIdProEUR = env.STRIPE_PRICE_ID_PRO_EUR;
 
-    if (!secretKey || !priceIdBasic || !priceIdPro) {
-      console.error("[CreateCheckout] ERRO: Variáveis do Stripe não configuradas.");
+    if (!secretKey) {
+      console.error("[CreateCheckout] ERRO: STRIPE_SECRET_KEY não configurada.");
       throw new Error("Configuração de pagamento incompleta no servidor.");
     }
 
     const stripe = new Stripe(secretKey);
-    const priceId = plan === "pro" ? priceIdPro : priceIdBasic;
+
+    let priceId = "";
+    const requestedCurrency = (currency || "BRL").toUpperCase();
+
+    if (requestedCurrency === "USD") {
+      priceId = plan === "pro" ? (priceIdProUSD || "") : (priceIdBasicUSD || "");
+    } else if (requestedCurrency === "EUR") {
+      priceId = plan === "pro" ? (priceIdProEUR || "") : (priceIdBasicEUR || "");
+    }
+
+    // Fallback para BRL
+    if (!priceId) {
+      priceId = plan === "pro" ? (priceIdProBRL || "") : (priceIdBasicBRL || "");
+    }
+
+    if (!priceId) {
+      console.error(`[CreateCheckout] ERRO: Não foi possível determinar o Price ID para o plano ${plan} (${requestedCurrency}).`);
+      throw new Error("Configuração de pagamento incompleta no servidor.");
+    }
 
     try {
       let finalSuccessUrl = "vipercar://success";

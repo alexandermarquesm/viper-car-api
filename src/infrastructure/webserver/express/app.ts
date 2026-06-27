@@ -119,14 +119,21 @@ export const createApp = (
     });
   });
 
-  // Plans Pricing Check (Public)
+  // Plans Pricing Check (Public - Multi-currency support)
   app.get("/status/plans", async (req: Request, res: Response) => {
     try {
       const secretKey = process.env.STRIPE_SECRET_KEY;
-      const priceIdBasic = process.env.STRIPE_PRICE_ID_BASIC;
-      const priceIdPro = process.env.STRIPE_PRICE_ID_PRO;
+      
+      const priceIdBasicBRL = process.env.STRIPE_PRICE_ID_BASIC;
+      const priceIdProBRL = process.env.STRIPE_PRICE_ID_PRO;
+      
+      const priceIdBasicUSD = process.env.STRIPE_PRICE_ID_BASIC_USD;
+      const priceIdProUSD = process.env.STRIPE_PRICE_ID_PRO_USD;
+      
+      const priceIdBasicEUR = process.env.STRIPE_PRICE_ID_BASIC_EUR;
+      const priceIdProEUR = process.env.STRIPE_PRICE_ID_PRO_EUR;
 
-      if (!secretKey || !priceIdBasic || !priceIdPro) {
+      if (!secretKey) {
         return res.json({
           basic: "49,90",
           pro: "89,90"
@@ -134,6 +141,27 @@ export const createApp = (
       }
 
       const stripe = new Stripe(secretKey);
+
+      // Determina qual moeda buscar baseado no query param (?currency=usd)
+      const requestedCurrency = (req.query.currency as string || "BRL").toUpperCase();
+
+      let priceIdBasic = priceIdBasicBRL;
+      let priceIdPro = priceIdProBRL;
+
+      if (requestedCurrency === "USD") {
+        priceIdBasic = priceIdBasicUSD || priceIdBasicBRL;
+        priceIdPro = priceIdProUSD || priceIdProBRL;
+      } else if (requestedCurrency === "EUR") {
+        priceIdBasic = priceIdBasicEUR || priceIdBasicBRL;
+        priceIdPro = priceIdProEUR || priceIdProBRL;
+      }
+
+      if (!priceIdBasic || !priceIdPro) {
+        return res.json({
+          basic: requestedCurrency === "USD" ? "19.90" : requestedCurrency === "EUR" ? "19,90" : "49,90",
+          pro: requestedCurrency === "USD" ? "39.90" : requestedCurrency === "EUR" ? "39,90" : "89,90"
+        });
+      }
 
       // Busca os preços em paralelo da Stripe
       const [priceBasic, pricePro] = await Promise.all([
@@ -144,6 +172,21 @@ export const createApp = (
       const formatStripePrice = (price: any) => {
         if (!price.unit_amount) return "0,00";
         const val = price.unit_amount / 100;
+        
+        // Formatação localizada conforme a moeda
+        if (requestedCurrency === "USD") {
+          return val.toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+        } else if (requestedCurrency === "EUR") {
+          return val.toLocaleString("de-DE", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+        }
+        
+        // Default para BRL
         return val.toLocaleString("pt-BR", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2
@@ -156,10 +199,10 @@ export const createApp = (
       });
     } catch (error) {
       console.error("Erro ao buscar preços do Stripe:", error);
-      // Fallback seguro em caso de falha de conexão com a Stripe
+      const requestedCurrency = (req.query.currency as string || "BRL").toUpperCase();
       res.json({
-        basic: "49,90",
-        pro: "89,90"
+        basic: requestedCurrency === "USD" ? "19.90" : requestedCurrency === "EUR" ? "19,90" : "49,90",
+        pro: requestedCurrency === "USD" ? "39.90" : requestedCurrency === "EUR" ? "39,90" : "89,90"
       });
     }
   });

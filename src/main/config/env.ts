@@ -14,6 +14,10 @@ const envSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   STRIPE_PRICE_ID_BASIC: z.string().optional(),
   STRIPE_PRICE_ID_PRO: z.string().optional(),
+  STRIPE_PRICE_ID_BASIC_USD: z.string().optional(),
+  STRIPE_PRICE_ID_PRO_USD: z.string().optional(),
+  STRIPE_PRICE_ID_BASIC_EUR: z.string().optional(),
+  STRIPE_PRICE_ID_PRO_EUR: z.string().optional(),
   CORS_ALLOWED_ORIGINS: z.string().optional(),
 });
 
