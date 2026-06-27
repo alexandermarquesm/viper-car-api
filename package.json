@@ -61,5 +61,9 @@
     "ts-jest": "^29.4.9",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.2"
+  },
+  "overrides": {
+    "@types/express-serve-static-core": "5.1.1",
+    "@types/express": "5.0.6"
   }
 }
