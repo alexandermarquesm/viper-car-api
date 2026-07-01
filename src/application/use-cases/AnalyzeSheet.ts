@@ -4,9 +4,10 @@ export class AnalyzeSheet {
   constructor(private analyzerProvider: IAnalyzerProvider) {}
 
   async execute(imageBuffer: Buffer, mimeType: string): Promise<any[]> {
-    const prompt = `Analise a tabela na imagem. Ela contém os dados de serviços de lavagem automotiva.
-    
-Para cada linha legível, extraia e retorne um objeto JSON com a chave "data" contendo um array de objetos com as seguintes chaves requeridas:
+    const prompt = `ATENÇÃO: Primeiro verifique se a imagem contém uma folha física, caderno, recibo ou prancheta contendo dados de serviços de lavagem automotiva, estética ou veículos. 
+Se a imagem NÃO contiver dados de veículos ou serviços automotivos (ex: fotos de pessoas, paisagens, animais, memes ou recibos de outro setor), você deve retornar obrigatoriamente um objeto JSON com a chave "error" igual a "invalid_document" e a chave "data" como um array vazio.
+
+Se a imagem for válida, analise a tabela/lista. Para cada linha legível, extraia e retorne um objeto JSON com a chave "data" contendo um array de objetos com as seguintes chaves requeridas:
 - "name": Nome do cliente (String)
 - "phone": Número de telefone, ou string vazia se não existir (String)
 - "plate": Placa do carro (String)
@@ -27,6 +28,10 @@ Para cada linha legível, extraia e retorne um objeto JSON com a chave "data" co
     } catch (error) {
       const cleaned = textResponse.replace(/^```json\n?/g, '').replace(/```$/g, '').trim();
       parsedResponse = JSON.parse(cleaned);
+    }
+
+    if (parsedResponse.error === "invalid_document") {
+      throw new Error("A imagem enviada não parece ser uma folha de serviços ou O.S. de lavagem válida.");
     }
 
     const parsedData = Array.isArray(parsedResponse) ? parsedResponse : (parsedResponse.data || parsedResponse.services || []);
